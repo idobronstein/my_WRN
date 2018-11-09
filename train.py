@@ -10,6 +10,8 @@ import numpy as np
 import cifar100 as data_input
 import resnet
 
+import sys
+
 
 
 # Dataset Configuration
@@ -80,6 +82,8 @@ def train():
     print('\tGPU memory fraction: %f' % FLAGS.gpu_fraction)
     print('\tLog device placement: %d' % FLAGS.log_device_placement)
 
+    sys.stdout.flush()
+
 
     with tf.Graph().as_default():
         init_step = 0
@@ -132,6 +136,7 @@ def train():
            init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
         else:
            print('No checkpoint file found. Start from the scratch.')
+        sys.stdout.flush()
 
         # Start queue runners & summary_writer
         tf.train.start_queue_runners(sess=sess)
@@ -156,6 +161,7 @@ def train():
                 test_best_acc = max(test_best_acc, test_acc)
                 format_str = ('%s: (Test)     step %d, loss=%.4f, acc=%.4f')
                 print(format_str % (datetime.now(), step, test_loss, test_acc))
+                sys.stdout.flush()
 
                 test_summary = tf.Summary()
                 test_summary.value.add(tag='test/loss', simple_value=test_loss)
@@ -192,6 +198,7 @@ def train():
                               'sec/batch)')
                 print(format_str % (datetime.now(), step, loss_value, acc_value, lr_value,
                                      examples_per_sec, sec_per_batch))
+                sys.stdout.flush()
                 summary_writer.add_summary(train_summary_str, step)
 
             # Save the model checkpoint periodically.
