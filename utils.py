@@ -16,7 +16,7 @@ def _relu(x, leakness=0.0, name=None):
 def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv', init_kernel=None):
     in_shape = x.get_shape()
     with tf.variable_scope(name):
-        if not init_kernel:
+        if init_kernel == None:
             kernel = tf.get_variable('kernel', [filter_size, filter_size, in_shape[3], out_channel],
                             tf.float32, initializer=tf.random_normal_initializer(
                                 stddev=np.sqrt(2.0/filter_size/filter_size/out_channel)))
