@@ -13,7 +13,7 @@ def _relu(x, leakness=0.0, name=None):
         name = 'relu' if name is None else name
         return tf.nn.relu(x, name='relu')
 
-def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv'):
+def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv', init_kernel=None):
     in_shape = x.get_shape()
     with tf.variable_scope(name):
         kernel = tf.get_variable('kernel', [filter_size, filter_size, in_shape[3], out_channel],
