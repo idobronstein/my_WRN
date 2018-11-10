@@ -49,7 +49,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def get_kernel(block_num, unit_num, conv_num, graph, sess):
     name = 'unit_{block_num}_{unit_num}/conv_{conv_num}/kernel:0'.format(
-            block_num=block_num + 1, unit_num=unit_num, conv_num=conv_num + 1)
+            block_num=block_num, unit_num=unit_num, conv_num=conv_num)
     kernel_tensor = graph.get_tensor_by_name(name)
     kernel_vector = sess.run(kernel_tensor)
     return kernel_vector
@@ -140,15 +140,17 @@ def train():
         conv_num = 2
         new_kernels = []
         new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
-        for i in range(block_num):
+        for i in range(1, block_num + 1):
             for j in range(FLAGS.num_residual_units):
-                for k in range(conv_num):
+                for k in range(1, conv_num + 1):
                     kernel = get_kernel(i, j, k, graph, sess)
                     cluster_centers, cluster_indices = cluster_kernel(kernel, new_width[i])
                     output_size = kernel.shape[-1]
                     new_kernel = np.zeros(kernel.shape)
                     for l in range(output_size):
                         new_kernel[:, :, :, l] = cluster_centers[:, :, :, cluster_indices[l]]
+                    diff = np.abs(kernel - new_kernel).sum()
+                    print("diff: {}".format(diff))
                     new_kernels.append(new_kernel)
         sess.close()
     tf.reset_default_graph()
