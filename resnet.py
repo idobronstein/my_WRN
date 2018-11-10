@@ -5,6 +5,7 @@ import numpy as np
 
 import utils
 
+convert= lambda x : tf.convert_to_tensor(x, dtype=np.float32)
 
 HParams = namedtuple('HParams',
                     'batch_size, num_classes, num_residual_units, k, '
@@ -13,28 +14,55 @@ HParams = namedtuple('HParams',
 
 
 class ResNet(object):
-    def __init__(self, hp, images, labels, global_step, init_kernels=None):
+    def __init__(self, hp, images, labels, global_step, init_trainble=None, init_global=None):
         self._hp = hp # Hyperparameters
         self._images = images # Input image
         self._labels = labels
         self._global_step = global_step
-        self._init_kernels = init_kernels
-        self._init_kernel_index = 0
+        self._init_trainble = init_trainble
+        self._init_trainble_index = 0
+        self._init_global = init_global
+        self._init_global_index = 0
+        assert not (bool(self._init_trainble) ^ bool(self._init_trainble))  
         self.is_train = tf.placeholder(tf.bool)
 
     def conv_with_init(self, x, filter_size, out_channel, strides, pad='SAME', name='conv'):
-        if not self._init_kernels:
+        if not self._init_trainble:
             output = utils._conv(x, filter_size, out_channel, strides, pad, name)
         else:
-            output = utils._conv(x, filter_size, out_channel, strides, pad, name, self._init_kernels[self._init_kernel_index]) 
-            self._init_kernel_index += 1
+            output = utils._conv(x, filter_size, out_channel, strides, pad, name, 
+                                convert(self._init_trainble[self._init_trainble_index][0])) 
+            self._init_trainble_index += 1
+        return output
+
+    def bn_with_init(self, x, is_train, global_step=None, name='bn'):
+        if not self._init_trainble:
+            output = utils._bn(x, is_train, global_step, name)
+        else:
+            bn_init_params = [convert(self._init_trainble[self._init_trainble_index][0]), # beta
+                              convert(self._init_trainble[self._init_trainble_index + 1][0]), # gamma
+                              convert(self._init_global[self._init_global_index][0]), # moving mean
+                              convert(self._init_global[self._init_global_index + 1][0])] # moving variances
+            output = utils._bn(x, is_train, global_step, name, bn_init_params)
+            self._init_trainble_index += 2
+            self._init_global_index += 2
+        return output
+
+    def fc_with_init(self, x, out_dim, name='fc'):
+        if not self._init_trainble:
+            output = utils._fc(x, self._hp.num_classes, name)
+        else:
+            fc_init_params = [convert(self._init_trainble[self._init_trainble_index][0]), # W
+                              convert(self._init_trainble[self._init_trainble_index + 1][0])] # b
+            output = utils._fc(x, self._hp.num_classes, name, fc_init_params)
+            self._init_trainble_index += 2
         return output
 
     def build_model(self):
         print('Building model')
         # Init. conv.
         print('\tBuilding unit: init_conv')
-        x = utils._conv(self._images, 3, 16, 1, name='init_conv')
+        x = self.conv_with_init(self._images, 3, 16, 1, name='init_conv')
 
         # Residual Blocks
         filters = [16, 16 * self._hp.k, 32 * self._hp.k, 64 * self._hp.k]
@@ -44,7 +72,7 @@ class ResNet(object):
             # First residual unit
             with tf.variable_scope('unit_%d_0' % i) as scope:
                 print('\tBuilding residual unit: %s' % scope.name)
-                x = utils._bn(x, self.is_train, self._global_step, name='bn_1')
+                x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_1')
                 x = utils._relu(x, name='relu_1')
 
                 # Shortcut
@@ -55,11 +83,11 @@ class ResNet(object):
                         shortcut = tf.nn.max_pool(x, [1, strides[i-1], strides[i-1], 1],
                                                   [1, strides[i-1], strides[i-1], 1], 'VALID')
                 else:
-                    shortcut = utils._conv(x, 1, filters[i], strides[i-1], name='shortcut')
+                    shortcut = self.conv_with_init(x, 1, filters[i], strides[i-1], name='shortcut')
 
                 # Residual
                 x = self.conv_with_init(x, 3, filters[i], strides[i-1], name='conv_1')
-                x = utils._bn(x, self.is_train, self._global_step, name='bn_2')
+                x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_2')
                 x = utils._relu(x, name='relu_2')
                 x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
 
@@ -73,10 +101,10 @@ class ResNet(object):
                     shortcut = x
 
                     # Residual
-                    x = utils._bn(x, self.is_train, self._global_step, name='bn_1')
+                    x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_1')
                     x = utils._relu(x, name='relu_1')
                     x = self.conv_with_init(x, 3, filters[i], 1, name='conv_1')
-                    x = utils._bn(x, self.is_train, self._global_step, name='bn_2')
+                    x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_2')
                     x = utils._relu(x, name='relu_2')
                     x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
 
@@ -86,7 +114,7 @@ class ResNet(object):
         # Last unit
         with tf.variable_scope('unit_last') as scope:
             print('\tBuilding unit: %s' % scope.name)
-            x = utils._bn(x, self.is_train, self._global_step)
+            x = self.bn_with_init(x, self.is_train, self._global_step)
             x = utils._relu(x)
             x = tf.reduce_mean(x, [1, 2])
 
@@ -95,7 +123,7 @@ class ResNet(object):
             print('\tBuilding unit: %s' % scope.name)
             x_shape = x.get_shape().as_list()
             x = tf.reshape(x, [-1, x_shape[1]])
-            x = utils._fc(x, self._hp.num_classes)
+            x = self.fc_with_init(x, self._hp.num_classes)
 
         self._logits = x
 

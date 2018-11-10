@@ -4,14 +4,17 @@ import sys
 import os
 from datetime import datetime
 import time
+import re 
+import pickle
 
 import tensorflow as tf
 import numpy as np
+from sklearn.cluster import KMeans
 
 import cifar100 as data_input
 import resnet
 
-from sklearn.cluster import KMeans
+KERNEL_3X3_REGEX = re.compile('unit_\d_\d/conv_\d/kernel:0')
 
 # Dataset Configuration
 tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
@@ -105,7 +108,6 @@ def train():
                             momentum=FLAGS.momentum)
         network = resnet.ResNet(hp, images, labels, None)
         network.build_model()
-        # network.build_train_op()  # NO training op
 
         # Build an initialization operation to run below.
         init = tf.initialize_all_variables()
@@ -134,7 +136,7 @@ def train():
             print('No checkpoint file found in the path [%s]' % FLAGS.ckpt_path)
             sys.exit(1)
 
-        # compress
+        # cluster kernels 3X3
         graph = tf.get_default_graph()
         block_num = 3
         conv_num = 2
@@ -152,9 +154,29 @@ def train():
                     diff = np.abs(kernel - new_kernel).sum()
                     print("diff: {}".format(diff))
                     new_kernels.append(new_kernel)
+
+        # save variables
+        init_trainable = []
+        init_global = []
+        kernel_3x3_index = 0
+        for var in tf.trainable_variables():
+            kernel_3x3_match = KERNEL_3X3_REGEX.match(var.name)
+            if kernel_3x3_match:
+                init_trainable.append((new_kernels[kernel_3x3_index], var.name))
+                kernel_3x3_index += 1
+            else:
+                var_vector = sess.run(var)
+                init_trainable.append((var_vector, var.name))
+        for var in tf.global_variables():
+            if 'mu' in var.name or 'sigma' in var.name:
+                var_vector = sess.run(var)
+                init_global.append((var_vector, var.name))
+        
+        #close old graph
         sess.close()
     tf.reset_default_graph()
 
+    # build new graph and eval
     with tf.Graph().as_default():
         # The CIFAR-100 dataset
         with tf.variable_scope('test_image'):
@@ -167,7 +189,7 @@ def train():
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, data_input.HEIGHT, data_input.WIDTH, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
 
-        new_network = resnet.ResNet(hp, images, labels, None, new_kernels)
+        new_network = resnet.ResNet(hp, images, labels, None, init_trainable, init_global)
         new_network.build_model()
 
         init = tf.initialize_all_variables()
