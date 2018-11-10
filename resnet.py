@@ -23,10 +23,10 @@ class ResNet(object):
         self.is_train = tf.placeholder(tf.bool)
 
     def conv_with_init(self, x, filter_size, out_channel, strides, pad='SAME', name='conv'):
-        if self._init_kernels:
+        if not self._init_kernels:
             output = utils._conv(x, filter_size, out_channel, strides, pad, name)
         else:
-            output = utils._conv(x, filter_size, out_channel, strides, pad, name) 
+            output = utils._conv(x, filter_size, out_channel, strides, pad, name, self._init_kernels[self._init_kernel_index]) 
             self._init_kernel_index += 1
         return output
 
