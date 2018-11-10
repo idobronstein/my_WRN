@@ -21,7 +21,7 @@ def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv', init_ke
                             tf.float32, initializer=tf.random_normal_initializer(
                                 stddev=np.sqrt(2.0/filter_size/filter_size/out_channel)))
         else: 
-            kernel = init_kernels
+            kernel = init_kernel
         if kernel not in tf.get_collection(WEIGHT_DECAY_KEY):
             tf.add_to_collection(WEIGHT_DECAY_KEY, kernel)
             # print('\tadded to WEIGHT_DECAY_KEY: %s(%s)' % (kernel.name, str(kernel.get_shape().as_list())))
