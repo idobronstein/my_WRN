@@ -23,6 +23,7 @@ def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv'):
             tf.add_to_collection(WEIGHT_DECAY_KEY, kernel)
             # print('\tadded to WEIGHT_DECAY_KEY: %s(%s)' % (kernel.name, str(kernel.get_shape().as_list())))
         conv = tf.nn.conv2d(x, kernel, [1, strides, strides, 1], pad)
+        print(kernel)
     return conv
 
 def _fc(x, out_dim, name='fc'):

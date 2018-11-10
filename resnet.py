@@ -13,12 +13,22 @@ HParams = namedtuple('HParams',
 
 
 class ResNet(object):
-    def __init__(self, hp, images, labels, global_step):
+    def __init__(self, hp, images, labels, global_step, init_kernels=None):
         self._hp = hp # Hyperparameters
         self._images = images # Input image
         self._labels = labels
         self._global_step = global_step
+        self._init_kernels = init_kernels
+        self._init_kernel_index = 0
         self.is_train = tf.placeholder(tf.bool)
+
+    def conv_with_init(self, x, filter_size, out_channel, strides, pad='SAME', name='conv'):
+        if self._init_kernels:
+            output = utils._conv(x, filter_size, out_channel, strides, pad, name)
+        else:
+            output = utils._conv(x, filter_size, out_channel, strides, pad, name) 
+            self._init_kernel_index += 1
+        return output
 
     def build_model(self):
         print('Building model')
@@ -48,10 +58,10 @@ class ResNet(object):
                     shortcut = utils._conv(x, 1, filters[i], strides[i-1], name='shortcut')
 
                 # Residual
-                x = utils._conv(x, 3, filters[i], strides[i-1], name='conv_1')
+                x = self.conv_with_init(x, 3, filters[i], strides[i-1], name='conv_1')
                 x = utils._bn(x, self.is_train, self._global_step, name='bn_2')
                 x = utils._relu(x, name='relu_2')
-                x = utils._conv(x, 3, filters[i], 1, name='conv_2')
+                x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
 
                 # Merge
                 x = x + shortcut
@@ -65,10 +75,10 @@ class ResNet(object):
                     # Residual
                     x = utils._bn(x, self.is_train, self._global_step, name='bn_1')
                     x = utils._relu(x, name='relu_1')
-                    x = utils._conv(x, 3, filters[i], 1, name='conv_1')
+                    x = self.conv_with_init(x, 3, filters[i], 1, name='conv_1')
                     x = utils._bn(x, self.is_train, self._global_step, name='bn_2')
                     x = utils._relu(x, name='relu_2')
-                    x = utils._conv(x, 3, filters[i], 1, name='conv_2')
+                    x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
 
                     # Merge
                     x = x + shortcut
