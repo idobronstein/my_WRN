@@ -29,7 +29,7 @@ class ResNet(object):
         else:
             output = utils._conv(x, filter_size, out_channel, strides, pad, name, 
                                 convert(self._init_params[self._init_params_index][0])) 
-            self._init_trainble_index += 1
+            self._init_params_index += 1
         return output
 
     def bn_with_init(self, x, is_train, global_step=None, name='bn'):

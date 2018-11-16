@@ -16,8 +16,10 @@ import resnet
 
 
 UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
+SKIP_PARAM_REGEX =re.compile('(unit_)(1_0/)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
+
 
 # Dataset Configuration
 tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
@@ -71,10 +73,12 @@ def get_batch_norm(block_num, unit_num, bn_num, graph, sess):
 
 def get_last_batch_norm(graph, sess):
     name_last = 'unit_last/bn/{param}:0'
+    batch_param = []
     for param in BATCH_NORM_PARAN_NAMES:
         param_tensor = graph.get_tensor_by_name(name_last.format(param=param))
         param_vector = sess.run(param_tensor)
-    return param_vector
+        batch_param.append(param_vector)
+    return batch_param
 
 def cluster_kernel(kernel, cluster_num):
     k_means =  KMeans(n_clusters=cluster_num, algorithm="full", random_state=0)
@@ -167,7 +171,7 @@ def train():
         else:
             print('No checkpoint file found in the path [%s]' % FLAGS.ckpt_path)
             sys.exit(1)
-
+        '''
         graph = tf.get_default_graph()
         block_num = 3
         conv_num = 2
@@ -196,16 +200,21 @@ def train():
                 for l in range(output_size):
                     new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
                 new_params.append(new_batch_norm_param)
-        '''
-        f = open('new_kernels.pkl', 'rb')
-        new_kernels = pickle.load(f)
-        '''
+        
+        f = open('new_params.pkl', 'wb')
+        pickle.dump(new_params, f)
+        return'''
+        f = open('new_params.pkl', 'rb')
+        new_params = pickle.load(f)
+        
         # save variables
         init_params = []
         new_param_index = 0
         for var in tf.global_variables():
             update_match = UPDATE_PARAM_REGEX.match(var.name)
-            if update_match:
+            skip_match = SKIP_PARAM_REGEX.match(var.name)
+            skip_first_bn = 0
+            if update_match and not skip_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
                 new_param_index += 1
