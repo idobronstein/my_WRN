@@ -14,48 +14,44 @@ HParams = namedtuple('HParams',
 
 
 class ResNet(object):
-    def __init__(self, hp, images, labels, global_step, init_trainble=None, init_global=None):
+    def __init__(self, hp, images, labels, global_step, init_params=None):
         self._hp = hp # Hyperparameters
         self._images = images # Input image
         self._labels = labels
         self._global_step = global_step
-        self._init_trainble = init_trainble
-        self._init_trainble_index = 0
-        self._init_global = init_global
-        self._init_global_index = 0
-        assert not (bool(self._init_trainble) ^ bool(self._init_trainble))  
+        self._init_params = init_params
+        self._init_params_index = 0
         self.is_train = tf.placeholder(tf.bool)
 
     def conv_with_init(self, x, filter_size, out_channel, strides, pad='SAME', name='conv'):
-        if not self._init_trainble:
+        if not self._init_params:
             output = utils._conv(x, filter_size, out_channel, strides, pad, name)
         else:
             output = utils._conv(x, filter_size, out_channel, strides, pad, name, 
-                                convert(self._init_trainble[self._init_trainble_index][0])) 
+                                convert(self._init_params[self._init_params_index][0])) 
             self._init_trainble_index += 1
         return output
 
     def bn_with_init(self, x, is_train, global_step=None, name='bn'):
-        if not self._init_trainble:
+        if not self._init_params:
             output = utils._bn(x, is_train, global_step, name)
         else:
-            bn_init_params = [convert(self._init_trainble[self._init_trainble_index][0]), # beta
-                              convert(self._init_trainble[self._init_trainble_index + 1][0]), # gamma
-                              convert(self._init_global[self._init_global_index][0]), # moving mean
-                              convert(self._init_global[self._init_global_index + 1][0])] # moving variances
+            bn_init_params = [convert(self._init_params[self._init_params_index][0]), # moving mean
+                              convert(self._init_params[self._init_params_index + 1][0]), # moving variances
+                              convert(self._init_params[self._init_params_index + 2][0]), # beta
+                              convert(self._init_params[self._init_params_index + 3][0])] # gamma
             output = utils._bn(x, is_train, global_step, name, bn_init_params)
-            self._init_trainble_index += 2
-            self._init_global_index += 2
+            self._init_params_index += 4
         return output
 
     def fc_with_init(self, x, out_dim, name='fc'):
-        if not self._init_trainble:
+        if not self._init_params:
             output = utils._fc(x, self._hp.num_classes, name)
         else:
-            fc_init_params = [convert(self._init_trainble[self._init_trainble_index][0]), # W
-                              convert(self._init_trainble[self._init_trainble_index + 1][0])] # b
+            fc_init_params = [convert(self._init_params[self._init_params_index][0]), # W
+                              convert(self._init_params[self._init_params_index + 1][0])] # b
             output = utils._fc(x, self._hp.num_classes, name, fc_init_params)
-            self._init_trainble_index += 2
+            self._init_params_index += 2
         return output
 
     def build_model(self):

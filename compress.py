@@ -14,7 +14,10 @@ from sklearn.cluster import KMeans
 import cifar100 as data_input
 import resnet
 
-KERNEL_3X3_REGEX = re.compile('unit_\d_\d/conv_\d/kernel:0')
+
+UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
+BATCH_NORM_PARAM_NUM = 4
+BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
 
 # Dataset Configuration
 tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
@@ -57,6 +60,22 @@ def get_kernel(block_num, unit_num, conv_num, graph, sess):
     kernel_vector = sess.run(kernel_tensor)
     return kernel_vector
 
+def get_batch_norm(block_num, unit_num, bn_num, graph, sess):
+    name = 'unit_{block_num}_{unit_num}/bn_{bn_num}/{param}:0'
+    batch_param = []
+    for param in BATCH_NORM_PARAN_NAMES:
+        param_tensor = graph.get_tensor_by_name(name.format(block_num=block_num, unit_num=unit_num, bn_num=bn_num, param=param))
+        param_vector = sess.run(param_tensor)
+        batch_param.append(param_vector)
+    return batch_param
+
+def get_last_batch_norm(graph, sess):
+    name_last = 'unit_last/bn/{param}:0'
+    for param in BATCH_NORM_PARAN_NAMES:
+        param_tensor = graph.get_tensor_by_name(name_last.format(param=param))
+        param_vector = sess.run(param_tensor)
+    return param_vector
+
 def cluster_kernel(kernel, cluster_num):
     k_means =  KMeans(n_clusters=cluster_num, algorithm="full", random_state=0)
     h, w, i, o = kernel.shape
@@ -68,6 +87,19 @@ def cluster_kernel(kernel, cluster_num):
     cluster_centers = [np.reshape(cluster_centers[k], [h, w, i]) for k in range(cluster_num)]
     cluster_centers = np.moveaxis(cluster_centers, 0, 3)
     return cluster_centers, cluster_indices
+
+def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
+    clusters_batch_norm = [[None] * cluster_num] * BATCH_NORM_PARAM_NUM
+    for param_index in range(BATCH_NORM_PARAM_NUM):
+        cluster_size = 0
+        cluster_sum = 0
+        for cluster in range(cluster_num):
+                for i in range(len(cluster_indices)):
+                    if cluster_indices[i] == cluster:
+                        cluster_size += 1
+                        cluster_sum += batch_norm[param_index][cluster]
+                clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
+    return clusters_batch_norm
 
 def train():
     print('[Dataset Configuration]')
@@ -136,42 +168,52 @@ def train():
             print('No checkpoint file found in the path [%s]' % FLAGS.ckpt_path)
             sys.exit(1)
 
-        # cluster kernels 3X3
         graph = tf.get_default_graph()
         block_num = 3
         conv_num = 2
-        new_kernels = []
-        new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
+        old_kernels = []
+        old_batch_norm = []     
         for i in range(1, block_num + 1):
             for j in range(FLAGS.num_residual_units):
                 for k in range(1, conv_num + 1):
-                    kernel = get_kernel(i, j, k, graph, sess)
-                    cluster_centers, cluster_indices = cluster_kernel(kernel, new_width[i])
-                    output_size = kernel.shape[-1]
-                    new_kernel = np.zeros(kernel.shape)
-                    for l in range(output_size):
-                        new_kernel[:, :, :, l] = cluster_centers[:, :, :, cluster_indices[l]]
-                    diff = np.abs(kernel - new_kernel).sum()
-                    print("diff: {}".format(diff))
-                    new_kernels.append(new_kernel)
+                    old_kernels.append(get_kernel(i, j, k, graph, sess))
+                    old_batch_norm.append(get_batch_norm(i, j, k, graph, sess))
+        old_batch_norm = old_batch_norm[1:]
+        old_batch_norm.append(get_last_batch_norm(graph, sess))
 
+        new_params = []
+        new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
+        for i in range(len(old_batch_norm)):
+            cluster_kernels, cluster_indices = cluster_kernel(old_kernels[i], new_width[int(i / 8) + 1])
+            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, new_width[int(i / 8) + 1])
+            output_size = old_kernels[i].shape[-1]
+            new_kernel = np.zeros(old_kernels[i].shape)
+            for l in range(output_size):
+                new_kernel[:, :, :, l] = cluster_kernels[:, :, :, cluster_indices[l]]
+            new_params.append(new_kernel)
+            for p in range(BATCH_NORM_PARAM_NUM):
+                new_batch_norm_param = np.zeros(len(cluster_batchs_norm[p]))
+                for l in range(output_size):
+                    new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
+                new_params.append(new_batch_norm_param)
+        '''
+        f = open('new_kernels.pkl', 'rb')
+        new_kernels = pickle.load(f)
+        '''
         # save variables
-        init_trainable = []
-        init_global = []
-        kernel_3x3_index = 0
-        for var in tf.trainable_variables():
-            kernel_3x3_match = KERNEL_3X3_REGEX.match(var.name)
-            if kernel_3x3_match:
-                init_trainable.append((new_kernels[kernel_3x3_index], var.name))
-                kernel_3x3_index += 1
-            else:
-                var_vector = sess.run(var)
-                init_trainable.append((var_vector, var.name))
+        init_params = []
+        new_param_index = 0
         for var in tf.global_variables():
-            if 'mu' in var.name or 'sigma' in var.name:
+            update_match = UPDATE_PARAM_REGEX.match(var.name)
+            if update_match:
+                print("update {}".format(var.name))
+                init_params.append((new_params[new_param_index], var.name))
+                new_param_index += 1
+            else:
+                print("not update {}".format(var.name))
                 var_vector = sess.run(var)
-                init_global.append((var_vector, var.name))
-        
+                init_params.append((var_vector, var.name))
+
         #close old graph
         sess.close()
     tf.reset_default_graph()
@@ -189,7 +231,7 @@ def train():
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, data_input.HEIGHT, data_input.WIDTH, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
 
-        new_network = resnet.ResNet(hp, images, labels, None, init_trainable, init_global)
+        new_network = resnet.ResNet(hp, images, labels, None, init_params)
         new_network.build_model()
 
         init = tf.initialize_all_variables()

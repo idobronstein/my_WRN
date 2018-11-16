@@ -50,6 +50,7 @@ def _bn(x, is_train, global_step=None, name='bn', init_params=[]):
 
     with tf.variable_scope(name):
         decay = moving_average_decay
+
         batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2])
         if len(init_params) == 0:
             mu = tf.get_variable('mu', batch_mean.get_shape(), tf.float32,
