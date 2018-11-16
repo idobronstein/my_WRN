@@ -36,6 +36,8 @@ class ResNet(object):
         return output
 
     def bn_with_init(self, x, is_train, global_step=None, name='bn'):
+        return x
+        '''
         if not self._init_trainble:
             output = utils._bn(x, is_train, global_step, name)
         else:
@@ -47,7 +49,7 @@ class ResNet(object):
             self._init_trainble_index += 2
             self._init_global_index += 2
         return output
-
+        '''
     def fc_with_init(self, x, out_dim, name='fc'):
         if not self._init_trainble:
             output = utils._fc(x, self._hp.num_classes, name)
