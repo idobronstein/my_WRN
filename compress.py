@@ -171,7 +171,7 @@ def train():
         else:
             print('No checkpoint file found in the path [%s]' % FLAGS.ckpt_path)
             sys.exit(1)
-        '''
+        
         graph = tf.get_default_graph()
         block_num = 3
         conv_num = 2
@@ -200,13 +200,11 @@ def train():
                 for l in range(output_size):
                     new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
                 new_params.append(new_batch_norm_param)
-        
-        f = open('new_params.pkl', 'wb')
-        pickle.dump(new_params, f)
-        return'''
+    
+        '''
         f = open('new_params.pkl', 'rb')
         new_params = pickle.load(f)
-        
+        '''
         # save variables
         init_params = []
         new_param_index = 0
