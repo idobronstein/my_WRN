@@ -15,7 +15,8 @@ import cifar100 as data_input
 import resnet
 
 
-UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
+UPDATE_KERNEL_PARAM_REGEX = re.compile('(unit_)(\d_\d)(/)(conv_1)(/)(kernel)(:0)')
+UPDATE_BATCH_PARAM_REGEX = re.compile('(unit_)(\d_\d)(/)(bn_2)(/)(beta|gamma|mu|sigma)(:0)')
 SKIP_PARAM_REGEX =re.compile('(unit_)(1_0/)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
@@ -182,17 +183,16 @@ def train():
         old_batch_norm = []     
         for i in range(1, block_num + 1):
             for j in range(FLAGS.num_residual_units):
-                for k in range(1, conv_num + 1):
-                    old_kernels.append(get_kernel(i, j, k, graph, sess))
-                    old_batch_norm.append(get_batch_norm(i, j, k, graph, sess))
-        old_batch_norm = old_batch_norm[1:]
-        old_batch_norm.append(get_last_batch_norm(graph, sess))
+                    old_kernels.append(get_kernel(i, j, 1, graph, sess))
+                    old_batch_norm.append(get_batch_norm(i, j, 2, graph, sess))
+        #old_batch_norm = old_batch_norm[1:]
+        #old_batch_norm.append(get_last_batch_norm(graph, sess))
 
         new_params = []
         new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
         for i in range(len(old_batch_norm)):
-            cluster_kernels, cluster_indices = cluster_kernel(old_kernels[i], new_width[int(i / 8) + 1])
-            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, new_width[int(i / 8) + 1])
+            cluster_kernels, cluster_indices = cluster_kernel(old_kernels[i], new_width[int(i / 4) + 1])
+            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, new_width[int(i / 4) + 1])
             output_size = old_kernels[i].shape[-1]
             new_kernel = np.zeros(old_kernels[i].shape)
             for l in range(output_size):
@@ -208,9 +208,9 @@ def train():
         init_params = []
         new_param_index = 0
         for var in tf.global_variables():
-            update_match = UPDATE_PARAM_REGEX.match(var.name)
-            skip_match = SKIP_PARAM_REGEX.match(var.name)
-            skip_first_bn = 0
+            update_kernel_match = UPDATE_KERNEL_PARAM_REGEX.match(var.name)
+            update_batch_match = UPDATE_BATCH_PARAM_REGEX.match(var.name)
+            #skip_match = SKIP_PARAM_REGEX.match(var.name)
             if update_match and not skip_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
