@@ -93,6 +93,8 @@ def cluster_kernel(kernel, cluster_num):
     return cluster_centers, cluster_indices
 
 def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
+    return batch_norm
+    '''
     clusters_batch_norm = [[None] * cluster_num] * BATCH_NORM_PARAM_NUM
     for param_index in range(BATCH_NORM_PARAM_NUM):
         for cluster in range(cluster_num):
@@ -104,7 +106,7 @@ def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
                     cluster_sum += batch_norm[param_index][cluster]
             clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
     return clusters_batch_norm
-
+    '''
 def train():
     print('[Dataset Configuration]')
     print('\tCIFAR-100 dir: %s' % FLAGS.data_dir)
