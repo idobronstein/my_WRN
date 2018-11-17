@@ -93,7 +93,7 @@ def cluster_kernel(kernel, cluster_num):
     return cluster_centers, cluster_indices
 
 def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
-    clusters_batch_norm = [[None] * cluster_num] * BATCH_NORM_PARAM_NUM
+    clusters_batch_norm = np.zeros([BATCH_NORM_PARAM_NUM, cluster_num])
     for param_index in range(BATCH_NORM_PARAM_NUM):
         for cluster in range(cluster_num):
             cluster_size = 0
@@ -103,6 +103,8 @@ def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
                     cluster_size += 1
                     cluster_sum += batch_norm[param_index][i]
             clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
+            if param_index == 0 and cluster == 0:
+                print(clusters_batch_norm[param_index][cluster])
     return clusters_batch_norm
 
 def train():
