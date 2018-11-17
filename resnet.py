@@ -14,13 +14,14 @@ HParams = namedtuple('HParams',
 
 
 class ResNet(object):
-    def __init__(self, hp, images, labels, global_step, init_params=None):
+    def __init__(self, hp, images, labels, global_step, init_params=None, new_k=None):
         self._hp = hp # Hyperparameters
         self._images = images # Input image
         self._labels = labels
         self._global_step = global_step
         self._init_params = init_params
         self._init_params_index = 0
+        self.new_k = new_k
         self.is_train = tf.placeholder(tf.bool)
 
     def conv_with_init(self, x, filter_size, out_channel, strides, pad='SAME', name='conv'):
@@ -62,6 +63,8 @@ class ResNet(object):
 
         # Residual Blocks
         filters = [16, 16 * self._hp.k, 32 * self._hp.k, 64 * self._hp.k]
+        if self.new_k:
+            filters_new = [ [16, 16 * self.new_k, 32 * self.new_k, 64 * self.new_k]]
         strides = [1, 2, 2]
 
         for i in range(1, 4):
@@ -82,7 +85,10 @@ class ResNet(object):
                     shortcut = self.conv_with_init(x, 1, filters[i], strides[i-1], name='shortcut')
 
                 # Residual
-                x = self.conv_with_init(x, 3, filters[i], strides[i-1], name='conv_1')
+                if self.new_k:
+                    x = self.conv_with_init(x, 3, filters_new[i], strides[i-1], name='conv_1')
+                else:
+                    x = self.conv_with_init(x, 3, filters[i], strides[i-1], name='conv_1')
                 x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_2')
                 x = utils._relu(x, name='relu_2')
                 x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
@@ -99,7 +105,10 @@ class ResNet(object):
                     # Residual
                     x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_1')
                     x = utils._relu(x, name='relu_1')
-                    x = self.conv_with_init(x, 3, filters[i], 1, name='conv_1')
+                    if self.new_k:
+                        x = self.conv_with_init(x, 3, filters_new[i], 1, name='conv_1')
+                    else:
+                        x = self.conv_with_init(x, 3, filters[i], 1, name='conv_1')
                     x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_2')
                     x = utils._relu(x, name='relu_2')
                     x = self.conv_with_init(x, 3, filters[i], 1, name='conv_2')
