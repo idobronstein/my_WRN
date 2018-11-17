@@ -67,10 +67,10 @@ def _bn(x, is_train, global_step=None, name='bn', init_params=[]):
             tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
             tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
         else:
-            beta = init_params[0]
-            gamma = init_params[1]
-            mu = init_params[2]
-            sigma = init_params[3]
+            mu = init_params[0]
+            sigma = init_params[1]
+            beta = init_params[2]
+            gamma = init_params[3]
         # BN when training
 
         mean, var = tf.cond(is_train, lambda: (batch_mean, batch_var),
