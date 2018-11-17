@@ -15,8 +15,7 @@ import cifar100 as data_input
 import resnet
 
 
-#UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
-UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel)(:0)')
+UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
 SKIP_PARAM_REGEX =re.compile('(unit_)(1_0/)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
@@ -196,11 +195,11 @@ def train():
             for l in range(output_size):
                 new_kernel[:, :, :, l] = cluster_kernels[:, :, :, cluster_indices[l]]
             new_params.append(new_kernel)
-            #for p in range(BATCH_NORM_PARAM_NUM):
-                #new_batch_norm_param = np.zeros(len(cluster_batchs_norm[p]))
-                #for l in range(output_size):
-                #    new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
-                #new_params.append(new_batch_norm_param)
+            for p in range(BATCH_NORM_PARAM_NUM):
+                new_batch_norm_param = np.zeros(len(cluster_batchs_norm[p]))
+                for l in range(output_size):
+                    new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
+                new_params.append(new_batch_norm_param)
     
         '''
         f = open('new_params.pkl', 'rb')
