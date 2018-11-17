@@ -105,10 +105,7 @@ def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
                 if cluster_indices[i] == cluster:
                     cluster_size += 1
                     cluster_sum += batch_norm[param_index][i]
-            if param_index == 1:
-                clusters_batch_norm[param_index][cluster] = cluster_sum / (cluster_size ** 2)
-            else:
-                clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
+            clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
     return clusters_batch_norm
 
 def train():
