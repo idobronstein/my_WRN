@@ -16,7 +16,7 @@ import resnet
 
 
 UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
-SKIP_PARAM_REGEX =re.compile('(unit_)(1_0/)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
+SKIP_PARAM_REGEX =re.compile('(unit_)(\d_\d)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
 
@@ -215,7 +215,8 @@ def train():
         new_param_index = 0
         for var in tf.global_variables():
             update_match = UPDATE_PARAM_REGEX.match(var.name)
-            if update_match:
+            skip_match = SKIP_PARAM_REGEX.match(var.name)
+            if update_matcha and not skip_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
                 new_param_index += 1
