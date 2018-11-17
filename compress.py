@@ -204,10 +204,6 @@ def train():
                     new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
                 new_params.append(new_batch_norm_param)
     
-        '''
-        f = open('new_params.pkl', 'rb')
-        new_params = pickle.load(f)
-        '''
         # save variables
         init_params = []
         new_param_index = 0
