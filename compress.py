@@ -211,7 +211,7 @@ def train():
             update_kernel_match = UPDATE_KERNEL_PARAM_REGEX.match(var.name)
             update_batch_match = UPDATE_BATCH_PARAM_REGEX.match(var.name)
             #skip_match = SKIP_PARAM_REGEX.match(var.name)
-            if update_match and not skip_match:
+            if update_kernel_match or update_batch_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
                 new_param_index += 1
