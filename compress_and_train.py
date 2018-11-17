@@ -267,6 +267,8 @@ def train():
         new_network.build_model()
         new_network.build_train_op()
 
+        train_summary_op = tf.summary.merge_all()
+
         init = tf.initialize_all_variables()
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
