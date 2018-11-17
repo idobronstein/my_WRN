@@ -216,7 +216,7 @@ def train():
         for var in tf.global_variables():
             update_match = UPDATE_PARAM_REGEX.match(var.name)
             skip_match = SKIP_PARAM_REGEX.match(var.name)
-            if update_matcha and not skip_match:
+            if update_match and not skip_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
                 new_param_index += 1
