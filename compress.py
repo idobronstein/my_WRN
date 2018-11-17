@@ -15,8 +15,7 @@ import cifar100 as data_input
 import resnet
 
 
-UPDATE_KERNEL_PARAM_REGEX = re.compile('(unit_)(\d_\d)(/)(conv_1)(/)(kernel)(:0)')
-UPDATE_BATCH_PARAM_REGEX = re.compile('(unit_)(\d_\d)(/)(bn_2)(/)(beta|gamma|mu|sigma)(:0)')
+UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
 SKIP_PARAM_REGEX =re.compile('(unit_)(1_0/)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
@@ -93,11 +92,19 @@ def cluster_kernel(kernel, cluster_num):
     cluster_centers = np.moveaxis(cluster_centers, 0, 3)
     return cluster_centers, cluster_indices
 
+def add_kernel(kernel, cluster_indices, cluster_num):
+    h, w, i, o = kernel.shape
+    add_kernels = np.zeros([h, w, cluster_num, o])
+    for cluster in range(cluster_num):
+        cluster_sum = 0
+        for i in range(len(cluster_indices)):
+            if cluster_indices[i] == cluster:
+                cluster_sum += kernel[:, :, :, i]
+        add_kernels[:, :, :, cluster] = cluster_sum
+    return add_kernels
+
 def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
     clusters_batch_norm = np.zeros([BATCH_NORM_PARAM_NUM, cluster_num])
-    mean = batch_norm[0]
-    variance = batch_norm[1]
-    sqaured_mean = [v + m**2 for v, m in zip(variance, mean)]
     for param_index in range(BATCH_NORM_PARAM_NUM):
         for cluster in range(cluster_num):
             cluster_size = 0
@@ -179,11 +186,13 @@ def train():
         graph = tf.get_default_graph()
         block_num = 3
         conv_num = 2
-        old_kernels = []
+        old_kernels_to_cluster = []
+        old_kernels_to_add = []
         old_batch_norm = []     
         for i in range(1, block_num + 1):
             for j in range(FLAGS.num_residual_units):
-                    old_kernels.append(get_kernel(i, j, 1, graph, sess))
+                    old_kernels_to_cluster.append(get_kernel(i, j, 1, graph, sess))
+                    old_kernels_to_add.append(get_kernel(i, j, 2, graph, sess))
                     old_batch_norm.append(get_batch_norm(i, j, 2, graph, sess))
         #old_batch_norm = old_batch_norm[1:]
         #old_batch_norm.append(get_last_batch_norm(graph, sess))
@@ -191,27 +200,22 @@ def train():
         new_params = []
         new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
         for i in range(len(old_batch_norm)):
-            cluster_kernels, cluster_indices = cluster_kernel(old_kernels[i], new_width[int(i / 4) + 1])
-            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, new_width[int(i / 4) + 1])
-            output_size = old_kernels[i].shape[-1]
-            new_kernel = np.zeros(old_kernels[i].shape)
-            for l in range(output_size):
-                new_kernel[:, :, :, l] = cluster_kernels[:, :, :, cluster_indices[l]]
-            new_params.append(new_kernel)
+            cluster_num = new_width[int(i / 4) + 1]
+            cluster_kernels, cluster_indices = cluster_kernel(old_kernels_to_cluster[i], cluster_num)
+            add_kernels = add_kernel(old_kernels_to_add[i], cluster_indices, cluster_num)
+            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, cluster_num)
+            output_size = cluster_kernels.shape[-1]
+            new_params.append(cluster_kernels)
+            new_params.append(add_kernels)
             for p in range(BATCH_NORM_PARAM_NUM):
-                new_batch_norm_param = np.zeros(output_size)
-                for l in range(output_size):
-                    new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
-                new_params.append(new_batch_norm_param)
+                new_params.append(cluster_batchs_norm[p])
     
         # save variables
         init_params = []
         new_param_index = 0
         for var in tf.global_variables():
-            update_kernel_match = UPDATE_KERNEL_PARAM_REGEX.match(var.name)
-            update_batch_match = UPDATE_BATCH_PARAM_REGEX.match(var.name)
-            #skip_match = SKIP_PARAM_REGEX.match(var.name)
-            if update_kernel_match or update_batch_match:
+            update_match = UPDATE_PARAM_REGEX.match(var.name)
+            if update_match:
                 print("update {}".format(var.name))
                 init_params.append((new_params[new_param_index], var.name))
                 new_param_index += 1
