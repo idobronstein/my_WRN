@@ -93,8 +93,6 @@ def cluster_kernel(kernel, cluster_num):
     return cluster_centers, cluster_indices
 
 def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
-    return batch_norm
-    '''
     clusters_batch_norm = [[None] * cluster_num] * BATCH_NORM_PARAM_NUM
     for param_index in range(BATCH_NORM_PARAM_NUM):
         for cluster in range(cluster_num):
@@ -103,10 +101,10 @@ def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
             for i in range(len(cluster_indices)):
                 if cluster_indices[i] == cluster:
                     cluster_size += 1
-                    cluster_sum += batch_norm[param_index][cluster]
+                    cluster_sum += batch_norm[param_index][i]
             clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
     return clusters_batch_norm
-    '''
+
 def train():
     print('[Dataset Configuration]')
     print('\tCIFAR-100 dir: %s' % FLAGS.data_dir)
@@ -200,8 +198,7 @@ def train():
             for p in range(BATCH_NORM_PARAM_NUM):
                 new_batch_norm_param = np.zeros(output_size)
                 for l in range(output_size):
-                    #new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
-                    new_batch_norm_param[l] = cluster_batchs_norm[p][l]
+                    new_batch_norm_param[l] = cluster_batchs_norm[p][cluster_indices[l]]
                 new_params.append(new_batch_norm_param)
     
         '''
