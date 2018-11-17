@@ -206,9 +206,9 @@ def train():
             cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, cluster_num)
             output_size = cluster_kernels.shape[-1]
             new_params.append(cluster_kernels)
-            new_params.append(add_kernels)
             for p in range(BATCH_NORM_PARAM_NUM):
                 new_params.append(cluster_batchs_norm[p])
+            new_params.append(add_kernels)
     
         # save variables
         init_params = []
