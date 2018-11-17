@@ -64,7 +64,7 @@ class ResNet(object):
         # Residual Blocks
         filters = [16, 16 * self._hp.k, 32 * self._hp.k, 64 * self._hp.k]
         if self.new_k:
-            filters_new = [ [16, 16 * self.new_k, 32 * self.new_k, 64 * self.new_k]]
+            filters_new = [16, 16 * self.new_k, 32 * self.new_k, 64 * self.new_k]
         strides = [1, 2, 2]
 
         for i in range(1, 4):
