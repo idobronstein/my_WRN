@@ -16,7 +16,7 @@ import resnet
 
 
 UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d|last)(/)(bn|conv)(_\d)?(/)(kernel|beta|gamma|mu|sigma)(:0)')
-SKIP_PARAM_REGEX =re.compile('(unit_)(\d_\d)(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
+SKIP_PARAM_REGEX =re.compile('(unit_)(\d_\d)/(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
 BATCH_NORM_PARAM_NUM = 4
 BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
 
