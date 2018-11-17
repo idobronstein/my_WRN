@@ -99,8 +99,8 @@ def add_kernel(kernel, cluster_indices, cluster_num):
         cluster_sum = 0
         for i in range(len(cluster_indices)):
             if cluster_indices[i] == cluster:
-                cluster_sum += kernel[:, :, :, i]
-        add_kernels[:, :, :, cluster] = cluster_sum
+                cluster_sum += kernel[:, :, i, :]
+        add_kernels[:, :, cluster, :] = cluster_sum
     return add_kernels
 
 def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
@@ -204,7 +204,6 @@ def train():
             cluster_kernels, cluster_indices = cluster_kernel(old_kernels_to_cluster[i], cluster_num)
             add_kernels = add_kernel(old_kernels_to_add[i], cluster_indices, cluster_num)
             cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, cluster_num)
-            output_size = cluster_kernels.shape[-1]
             new_params.append(cluster_kernels)
             for p in range(BATCH_NORM_PARAM_NUM):
                 new_params.append(cluster_batchs_norm[p])
