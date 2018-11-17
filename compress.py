@@ -242,6 +242,15 @@ def train():
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, data_input.HEIGHT, data_input.WIDTH, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
 
+        hp = resnet.HParams(batch_size=FLAGS.batch_size,
+                    num_classes=FLAGS.num_classes,
+                    num_residual_units=FLAGS.num_residual_units,
+                    k=FLAGS.new_k,
+                    weight_decay=FLAGS.l2_weight,
+                    initial_lr=FLAGS.initial_lr,
+                    decay_step=decay_step,
+                    lr_decay=FLAGS.lr_decay,
+                    momentum=FLAGS.momentum)
         new_network = resnet.ResNet(hp, images, labels, None, init_params)
         new_network.build_model()
 
