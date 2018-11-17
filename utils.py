@@ -21,7 +21,7 @@ def _conv(x, filter_size, out_channel, strides, pad='SAME', name='conv', init_ke
                             tf.float32, initializer=tf.random_normal_initializer(
                                 stddev=np.sqrt(2.0/filter_size/filter_size/out_channel)))
         else: 
-            kernel = init_kernel
+            kernel = tf.get_variable('kernel', initializer=init_kernel)
         if kernel not in tf.get_collection(WEIGHT_DECAY_KEY):
             tf.add_to_collection(WEIGHT_DECAY_KEY, kernel)
             # print('\tadded to WEIGHT_DECAY_KEY: %s(%s)' % (kernel.name, str(kernel.get_shape().as_list())))
@@ -37,8 +37,8 @@ def _fc(x, out_dim, name='fc', init_params=[]):
             b = tf.get_variable('biases', [out_dim], tf.float32,
                                 initializer=tf.constant_initializer(0.0))
         else:
-            w = init_params[0]
-            b = init_params[1]
+            w = tf.get_variable('weights', initializer=init_params[0])
+            b = tf.get_variable('biases', initializer=init_params[1])
         if w not in tf.get_collection(WEIGHT_DECAY_KEY):
             tf.add_to_collection(WEIGHT_DECAY_KEY, w)
         fc = tf.nn.bias_add(tf.matmul(x, w), b)
@@ -67,10 +67,10 @@ def _bn(x, is_train, global_step=None, name='bn', init_params=[]):
             tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
             tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
         else:
-            mu = init_params[0]
-            sigma = init_params[1]
-            beta = init_params[2]
-            gamma = init_params[3]
+            mu = tf.get_variable('mu', initializer=init_params[0])
+            sigma = tf.get_variable('sigma', initializer=init_params[1])
+            beta = tf.get_variable('beta', initializer=init_params[2])
+            gamma = tf.get_variable('gamma', initializer=init_params[3])
         # BN when training
 
         mean, var = tf.cond(is_train, lambda: (batch_mean, batch_var),
