@@ -15,7 +15,7 @@ import sys
 
 
 # Dataset Configuration
-#tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
+tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
 tf.app.flags.DEFINE_integer('num_classes', 100, """Number of classes in the dataset.""")
 tf.app.flags.DEFINE_integer('num_train_instance', 50000, """Number of training images.""")
 tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images.""")
@@ -55,7 +55,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def train():
     print('[Dataset Configuration]')
-    #print('\tCIFAR-100 dir: %s' % FLAGS.data_dir)
+    print('\tCIFAR-100 dir: %s' % FLAGS.data_dir)
     print('\tNumber of classes: %d' % FLAGS.num_classes)
     print('\tNumber of training images: %d' % FLAGS.num_train_instance)
     print('\tNumber of test images: %d' % FLAGS.num_test_instance)
