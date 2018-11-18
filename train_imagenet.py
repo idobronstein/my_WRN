@@ -22,7 +22,7 @@ tf.app.flags.DEFINE_integer('num_train_instance', 50000, """Number of training i
 tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images.""")
 
 # Network Configuration
-tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in a batch.""")
+#tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('num_residual_units', 2, """Number of residual block per group.
                                                 Total number of conv layers will be 6n+4""")
 tf.app.flags.DEFINE_integer('k', 2, """Network width multiplier""")
@@ -62,7 +62,7 @@ def train():
     print('\tNumber of test images: %d' % FLAGS.num_test_instance)
 
     print('[Network Configuration]')
-    print('\tBatch size: %d' % FLAGS.batch_size)
+    #print('\tBatch size: %d' % FLAGS.batch_size)
     print('\tResidual blocks per group: %d' % FLAGS.num_residual_units)
     print('\tNetwork width multiplier: %d' % FLAGS.k)
 
@@ -97,12 +97,12 @@ def train():
             test_images, test_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'validation'), num_preprocess_threads=4)
 
         # Build a Graph that computes the predictions from the inference model.
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, image_processing.image_size, image_processing.image_size, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        images = tf.placeholder(tf.float32, [image_processing.batch_size, image_processing.image_size, image_processing.image_size, 3])
+        labels = tf.placeholder(tf.int32, [image_processing.batch_size])
 
         # Build model
-        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
-        hp = resnet.HParams(batch_size=FLAGS.batch_size,
+        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / image_processing.batch_size
+        hp = resnet.HParams(batch_size=image_processing.batch_size,
                             num_classes=FLAGS.num_classes,
                             num_residual_units=FLAGS.num_residual_units,
                             k=FLAGS.k,
@@ -192,7 +192,7 @@ def train():
 
             # Display & Summary(training)
             if step % FLAGS.display == 0:
-                num_examples_per_step = FLAGS.batch_size
+                num_examples_per_step = image_processing.batch_size
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = float(duration)
                 format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
