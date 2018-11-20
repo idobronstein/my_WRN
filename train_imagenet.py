@@ -97,12 +97,12 @@ def train():
             test_images, test_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'validation'), num_preprocess_threads=4)
 
         # Build a Graph that computes the predictions from the inference model.
-        images = tf.placeholder(tf.float32, [image_processing.batch_size, image_processing.image_size, image_processing.image_size, 3])
-        labels = tf.placeholder(tf.int32, [image_processing.batch_size])
+        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
 
         # Build model
-        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / image_processing.batch_size
-        hp = resnet.HParams(batch_size=image_processing.batch_size,
+        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
+        hp = resnet.HParams(batch_size=FLAGS.batch_size,
                             num_classes=FLAGS.num_classes,
                             num_residual_units=FLAGS.num_residual_units,
                             k=FLAGS.k,
@@ -192,7 +192,7 @@ def train():
 
             # Display & Summary(training)
             if step % FLAGS.display == 0:
-                num_examples_per_step = image_processing.batch_size
+                num_examples_per_step = FLAGS.batch_size
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = float(duration)
                 format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
