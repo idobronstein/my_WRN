@@ -99,7 +99,7 @@ def train():
         # Build a Graph that computes the predictions from the inference model.
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
-        decrease_one = tf.constant(-1s, shape=[FLAGS.batch_size])
+        decrease_one = tf.constant(-1, shape=[FLAGS.batch_size])
         labels = tf.math.add(labels, decrease_one)
         # Build model
         decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
