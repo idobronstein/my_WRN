@@ -95,11 +95,11 @@ def train():
             train_images, train_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'train'), num_preprocess_threads=4)
         with tf.variable_scope('test_image'):
             test_images, test_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'validation'), num_preprocess_threads=4)
-        import ipdb; ipdb.set_trace()
+
         # Build a Graph that computes the predictions from the inference model.
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
-        decrease_one = tf.constant(-1.0, shape=[FLAGS.batch_size])
+        decrease_one = tf.constant(-1s, shape=[FLAGS.batch_size])
         labels = tf.math.add(labels, decrease_one)
         # Build model
         decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
