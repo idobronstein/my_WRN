@@ -89,7 +89,7 @@ def get_last_batch_norm(graph, sess):
     return batch_param
 
 def cluster_kernel(kernel, cluster_num):
-    k_means =  KMeans(n_clusters=int(cluster_num), algorithm="full", random_state=0)
+    k_means =  KMeans(n_clusters=cluster_num, algorithm="full", random_state=0)
     h, w, i, o = kernel.shape
     kernel_shift = np.moveaxis(kernel, -1, 0)
     kernel_reshape = np.reshape(kernel_shift, [o, h*w*i])
@@ -215,7 +215,7 @@ def train():
         #old_batch_norm.append(get_last_batch_norm(graph, sess))
 
         new_params = []
-        new_width = [16, 16 * FLAGS.new_k, 32 * FLAGS.new_k, 64 * FLAGS.new_k]
+        new_width = [16, int(16 * FLAGS.new_k), int(32 * FLAGS.new_k), int(64 * FLAGS.new_k)]
         for i in range(len(old_batch_norm)):
             cluster_num = new_width[int(i / 4) + 1]
             cluster_kernels, cluster_indices = cluster_kernel(old_kernels_to_cluster[i], cluster_num)

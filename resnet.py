@@ -62,9 +62,9 @@ class ResNet(object):
         x = self.conv_with_init(self._images, 3, 16, 1, name='init_conv')
 
         # Residual Blocks
-        filters = [16, 16 * self._hp.k, 32 * self._hp.k, 64 * self._hp.k]
+        filters = [16, int(16 * self._hp.k), int(32 * self._hp.k), int(64 * self._hp.k)]
         if self.new_k:
-            filters_new = [16, 16 * self.new_k, 32 * self.new_k, 64 * self.new_k]
+            filters_new = [16, int(16 * self.new_k), int(32 * self.new_k), int(64 * self.new_k)]
         strides = [1, 2, 2]
 
         for i in range(1, 4):
