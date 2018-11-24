@@ -25,6 +25,7 @@ tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in
 tf.app.flags.DEFINE_integer('num_residual_units', 2, """Number of residual block per group.
                                                 Total number of conv layers will be 6n+4""")
 tf.app.flags.DEFINE_integer('k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_integer('new_k', 2, """Network width multiplier""")
 
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0001, """L2 loss weight applied all the weights""")
@@ -110,10 +111,11 @@ def train():
                             decay_step=decay_step,
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
-        network = resnet.ResNet(hp, images, labels, global_step)
+        network = resnet.ResNet(hp, images, labels, global_step, new_k=FLAGS.new_k)
         network.build_model()
         network.build_train_op()
-
+        network.count_trainable_params()
+        
         # Summaries(training)
         train_summary_op = tf.summary.merge_all()
 

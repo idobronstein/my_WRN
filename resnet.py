@@ -174,3 +174,14 @@ class ResNet(object):
                 self.train_op = tf.no_op()
         else:
             self.train_op = apply_grad_op
+
+    def count_trainable_params(self):
+    total_parameters = 0
+    for variable in tf.trainable_variables():
+        shape = variable.get_shape()
+        variable_parametes = 1
+        for dim in shape:
+            variable_parametes *= dim.value
+        total_parameters += variable_parametes
+    self.total_parameters = total_parameters
+    print("Total training params: {0}".format(total_parameters)) 
