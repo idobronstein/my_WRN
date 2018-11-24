@@ -17,7 +17,7 @@ import sys
 
 # Dataset Configuration
 #tf.app.flags.DEFINE_string('data_dir', './cifar-100-binary', """Path to the CIFAR-100 binary data.""")
-tf.app.flags.DEFINE_integer('num_classes', 100, """Number of classes in the dataset.""")
+tf.app.flags.DEFINE_integer('num_classes', 1000, """Number of classes in the dataset.""")
 tf.app.flags.DEFINE_integer('num_train_instance', 50000, """Number of training images.""")
 tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images.""")
 
@@ -95,7 +95,7 @@ def train():
             train_images, train_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'train'), num_preprocess_threads=4)
         with tf.variable_scope('test_image'):
             test_images, test_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'validation'), num_preprocess_threads=4)
-
+        import ipdb; ipdb.set_trace()
         # Build a Graph that computes the predictions from the inference model.
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
@@ -114,6 +114,7 @@ def train():
         network = resnet.ResNet(hp, images, labels, global_step)
         network.build_model()
         network.build_train_op()
+        network.count_trainable_params()
 
         # Summaries(training)
         train_summary_op = tf.summary.merge_all()
