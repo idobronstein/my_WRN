@@ -61,18 +61,17 @@ def _bn(x, is_train, global_step=None, name='bn', init_params=[]):
                             initializer=tf.zeros_initializer)
             gamma = tf.get_variable('gamma', batch_var.get_shape(), tf.float32,
                             initializer=tf.ones_initializer)
-            update = 1.0 - decay
-            update_mu = mu.assign_sub(update*(mu - batch_mean))
-            update_sigma = sigma.assign_sub(update*(sigma - batch_var))
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
         else:
             mu = tf.get_variable('mu', initializer=init_params[0])
             sigma = tf.get_variable('sigma', initializer=init_params[1])
             beta = tf.get_variable('beta', initializer=init_params[2])
             gamma = tf.get_variable('gamma', initializer=init_params[3])
         # BN when training
-
+        update = 1.0 - decay
+        update_mu = mu.assign_sub(update*(mu - batch_mean))
+        update_sigma = sigma.assign_sub(update*(sigma - batch_var))
+        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
         mean, var = tf.cond(is_train, lambda: (batch_mean, batch_var),
                             lambda: (mu, sigma))
         bn = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5)
