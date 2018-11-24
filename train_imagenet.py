@@ -99,8 +99,7 @@ def train():
         # Build a Graph that computes the predictions from the inference model.
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
-        decrease_one = tf.constant(-1, shape=[FLAGS.batch_size])
-        labels = tf.math.add(labels, decrease_one)
+
         # Build model
         decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
@@ -155,7 +154,7 @@ def train():
                 test_loss, test_acc = 0.0, 0.0
                 for i in range(FLAGS.test_iter):
                     test_images_val, test_labels_val = sess.run([test_images, test_labels])
-                    print(test_labels_val)
+                    import ipdb; ipdb.set_trace()
                     loss_value, acc_value = sess.run([network.loss, network.acc],
                                 feed_dict={network.is_train:False, images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
