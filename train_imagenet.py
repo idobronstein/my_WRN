@@ -155,6 +155,7 @@ def train():
                 test_loss, test_acc = 0.0, 0.0
                 for i in range(FLAGS.test_iter):
                     test_images_val, test_labels_val = sess.run([test_images, test_labels])
+                    print(test_labels_val)
                     loss_value, acc_value = sess.run([network.loss, network.acc],
                                 feed_dict={network.is_train:False, images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
@@ -185,6 +186,7 @@ def train():
             # Train
             start_time = time.time()
             train_images_val, train_labels_val = sess.run([train_images, train_labels])
+            print(train_labels_val)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op],
                         feed_dict={network.is_train:True, images:train_images_val, labels:train_labels_val})
