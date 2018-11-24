@@ -24,8 +24,8 @@ tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images
 tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('num_residual_units', 2, """Number of residual block per group.
                                                 Total number of conv layers will be 6n+4""")
-tf.app.flags.DEFINE_integer('k', 2, """Network width multiplier""")
-tf.app.flags.DEFINE_integer('new_k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_float('k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_float('new_k', 2, """Network width multiplier""")
 
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0001, """L2 loss weight applied all the weights""")

@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_integer('num_train_instance', 50000, """Number of training i
 tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('num_residual_units', 2, """Number of residual block per group.
                                                 Total number of conv layers will be 6n+4""")
-tf.app.flags.DEFINE_integer('k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_float('k', 2, """Network width multiplier""")
 
 # Testing Configuration
 tf.app.flags.DEFINE_string('ckpt_path', '', """Path to the checkpoint or dir.""")
@@ -42,7 +42,7 @@ tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 # cluster params
-tf.app.flags.DEFINE_integer('new_k', 1, """New Network width multiplier""")
+tf.app.flags.DEFINE_float('new_k', 1, """New Network width multiplier""")
 
 # Other Configuration(not needed for testing, but required fields in
 # build_model())
