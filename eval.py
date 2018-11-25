@@ -23,7 +23,8 @@ tf.app.flags.DEFINE_integer('num_train_instance', 50000, """Number of training i
 tf.app.flags.DEFINE_integer('batch_size', 100, """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_integer('num_residual_units', 2, """Number of residual block per group.
                                                 Total number of conv layers will be 6n+4""")
-tf.app.flags.DEFINE_integer('k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_float('k', 2, """Network width multiplier""")
+tf.app.flags.DEFINE_float('new_k', 2, """Network width multiplier""")
 
 # Testing Configuration
 tf.app.flags.DEFINE_string('ckpt_path', '', """Path to the checkpoint or dir.""")
@@ -88,7 +89,7 @@ def train():
                             decay_step=decay_step,
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
-        network = resnet.ResNet(hp, images, labels, None)
+        network = resnet.ResNet(hp, images, labels, None, new_k=FLAGS.new_k)
         network.build_model()
         # network.build_train_op()  # NO training op
 
