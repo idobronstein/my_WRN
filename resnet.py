@@ -102,7 +102,7 @@ class ResNet(object):
                     # Residual
                     x = self.bn_with_init(x, self.is_train, self._global_step, name='bn_1')
                     x = utils._relu(x, name='relu_1')
-                    if (i == 4 and j == self._hp.num_residual_units) and self.new_k:
+                    if (i == 3 and j == self._hp.num_residual_units - 1) and self.new_k:
                         x = self.conv_with_init(x, 3, filters_new[i], 1, name='conv_1')
                     else:
                         x = self.conv_with_init(x, 3, filters[i], 1, name='conv_1')
