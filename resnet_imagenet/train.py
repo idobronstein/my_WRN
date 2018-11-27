@@ -135,7 +135,7 @@ def train():
                     test_images_val, test_labels_val = sess.run([test_images, test_labels])
                     test_labels_val -= 1
                     loss_value, acc_value = sess.run([network.loss, network.acc],
-                                feed_dict={network.is_train:False, images:test_images_val, labels:test_labels_val})
+                                feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
                     test_acc += acc_value
                 test_loss /= FLAGS.test_iter
@@ -158,7 +158,7 @@ def train():
             train_labels_val -= 1
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op],
-                        feed_dict={network.is_train:True, images:train_images_val, labels:train_labels_val})
+                        feed_dict={images:train_images_val, labels:train_labels_val})
             duration = time.time() - start_time
 
             assert not np.isnan(loss_value)
