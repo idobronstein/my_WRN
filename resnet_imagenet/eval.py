@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write l
 tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('display', 100, """Number of iterations to display training info.""")
 tf.app.flags.DEFINE_integer('test_interval', 1000, """Number of iterations to run a test""")
-tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
+tf.app.flags.DEFINE_integer('test_iter', 10000, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
@@ -140,7 +140,6 @@ def train():
                 result_ll[test_labels_val[j] % FLAGS.num_classes][correct] += 1
         test_loss /= FLAGS.test_iter
         # Summary display & output
-        import ipdb; ipdb.set_trace()
         acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll]
         result_total = np.sum(np.array(result_ll), axis=0)
         acc_total = float(result_total[0])/np.sum(result_total)
