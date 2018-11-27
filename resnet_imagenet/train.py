@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import time
 
+import torch
 import tensorflow as tf
 import numpy as np
 
