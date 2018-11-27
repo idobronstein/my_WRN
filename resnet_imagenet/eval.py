@@ -132,6 +132,7 @@ def train():
         for i in range(FLAGS.test_iter):
             test_images_val, test_labels_val = sess.run([test_images, test_labels])
             test_labels_val -= 1
+            print(test_labels_val)
             preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                         feed_dict={ images:test_images_val, labels:test_labels_val})
             test_loss += loss_value
