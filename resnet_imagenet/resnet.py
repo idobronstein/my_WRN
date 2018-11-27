@@ -27,10 +27,7 @@ class ResNet():
         return v
 
     def init_variable(self, param, name):
-        try:
-            variable = tf.get_variable(name, initializer=param)
-        except:
-            import ipdb; ipdb.set_trace()
+        variable = tf.get_variable(name, initializer=param)
         return variable
     
     def conv2d(self, x,  name, stride=1, padding=0):
