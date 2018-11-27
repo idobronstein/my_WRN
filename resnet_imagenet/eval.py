@@ -24,7 +24,6 @@ tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images
 tf.app.flags.DEFINE_float('l2_weight', 0.0001, """L2 loss weight applied all the weights""")
 tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
 tf.app.flags.DEFINE_float('initial_lr', 0.1, """Initial learning rate""")
-tf.app.flags.DEFINE_string('output', '', """Path to the output txt.""")
 tf.app.flags.DEFINE_float('lr_step_epoch', 100.0, """Epochs after which learing rate decays""")
 tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
 
@@ -132,7 +131,6 @@ def train():
         for i in range(FLAGS.test_iter):
             test_images_val, test_labels_val = sess.run([test_images, test_labels])
             test_labels_val -= 1
-            print(test_labels_val)
             preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                         feed_dict={ images:test_images_val, labels:test_labels_val})
             test_loss += loss_value
@@ -144,21 +142,7 @@ def train():
         acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll]
         result_total = np.sum(np.array(result_ll), axis=0)
         acc_total = float(result_total[0])/np.sum(result_total)
-        print('Class    \t\t\tT\tF\tAcc.')
-        format_str = '%-31s %7d %7d %.5f'
-        for i in range(FLAGS.num_classes):
-            print(format_str % (classes[i], result_ll[i][0], result_ll[i][1], acc_list[i]))
         print(format_str % ('(Total)', result_total[0], result_total[1], acc_total))
-        # Output to file(if specified)
-        if FLAGS.output.strip():
-            with open(FLAGS.output, 'w') as fd:
-                fd.write('Class    \t\t\tT\tF\tAcc.\n')
-                format_str = '%-31s %7d %7d %.5f'
-                for i in range(FLAGS.num_classes):
-                    t, f = result_ll[i]
-                    format_str = '%-31s %7d %7d %.5f\n'
-                    fd.write(format_str % (classes[i].replace(' ', '-'), t, f, acc_list[i]))
-                fd.write(format_str % ('(Total)', result_total[0], result_total[1], acc_total))
 
 def main(argv=None):  # pylint: disable=unused-argument
   train()
