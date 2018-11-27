@@ -142,6 +142,7 @@ def train():
         acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll]
         result_total = np.sum(np.array(result_ll), axis=0)
         acc_total = float(result_total[0])/np.sum(result_total)
+        format_str = '%-31s %7d %7d %.5f'
         print(format_str % ('(Total)', result_total[0], result_total[1], acc_total))
 
 def main(argv=None):  # pylint: disable=unused-argument
