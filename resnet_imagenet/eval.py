@@ -86,7 +86,6 @@ def train():
         params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
         network = resnet.ResNet(params, hp, images, labels, None)
         network.build_model()
-        network.build_train_op()
         network.count_trainable_params()
 
         # Summaries(training)
