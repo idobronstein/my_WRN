@@ -34,7 +34,7 @@ tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write l
 tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('display', 100, """Number of iterations to display training info.""")
 tf.app.flags.DEFINE_integer('test_interval', 1000, """Number of iterations to run a test""")
-tf.app.flags.DEFINE_integer('test_iter', 196, """Number of iterations during a test""")
+tf.app.flags.DEFINE_integer('test_iter', 195, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
