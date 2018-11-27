@@ -157,8 +157,8 @@ def train():
             train_images_val, train_labels_val = sess.run([train_images, train_labels])
             train_labels_val -= 1
             print(train_labels_val)
-            _, lr_value, loss_value, acc_value, train_summary_str = \
-                    sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op],
+            _, lr_value, loss_value, acc_value, train_summary_str, logits = \
+                    sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op, network._logits],
                         feed_dict={images:train_images_val, labels:train_labels_val})
             duration = time.time() - start_time
             if np.isnan(loss_value):
