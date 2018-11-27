@@ -111,7 +111,7 @@ def train():
         result_ll = [[0, 0] for _ in range(FLAGS.num_classes)] # Correct/wrong counts for each class
         test_loss = 0.0, 0.0
         for i in range(FLAGS.test_iter):
-            with open('images/image_{0}'.format(i)) as f:
+            with open('images/image_{0}'.format(i), 'rb') as f:
                     test_images_val, test_labels_val = pickle.load(f)
             preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                         feed_dict={ images:test_images_val, labels:test_labels_val})
