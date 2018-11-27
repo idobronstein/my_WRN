@@ -113,6 +113,8 @@ def train():
         for i in range(FLAGS.test_iter):
             with open('images/image_{0}'.format(i), 'rb') as f:
                     test_images_val, test_labels_val = pickle.load(f)
+            b, c, h, w = test_images_val.shape
+            test_images_val = np.reshape(test_images_val, [b, h, w, c])
             preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                         feed_dict={ images:test_images_val, labels:test_labels_val})
             test_loss += loss_value
