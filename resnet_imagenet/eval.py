@@ -111,6 +111,7 @@ def train():
         result_ll = [[0, 0] for _ in range(FLAGS.num_classes)] # Correct/wrong counts for each class
         test_loss = 0.0, 0.0
         for i in range(FLAGS.test_iter):
+            import ipdb; ipdb.set_trace()
             print("Step number: {0}".format(i))
             with open('images/image_{0}'.format(i), 'rb') as f:
                     test_images_val, test_labels_val = pickle.load(f)
