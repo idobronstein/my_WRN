@@ -80,7 +80,7 @@ class ResNet():
         self.fc_weights = self.init_variable(self._params['fc.weight'], 'fc.weight')
         self.fc_bias = self.init_variable(self._params['fc.bias'], 'fc.bias')
         o = tf.matmul(o, self.fc_weights) + self.fc_bias
-        s
+        
         self._logits = o
         # Probs & preds & acc
         self.preds = tf.to_int32(tf.argmax(self._logits, 1, name='preds'))
