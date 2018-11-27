@@ -124,7 +124,7 @@ def train():
                 result_ll[test_labels_val[j] % FLAGS.num_classes][correct] += 1
         test_loss /= FLAGS.test_iter
         # Summary display & output
-        acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll]
+        acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll if r[0]+r[1] > 0]
         result_total = np.sum(np.array(result_ll), axis=0)
         acc_total = float(result_total[0])/np.sum(result_total)
         format_str = '%-31s %7d %7d %.5f'
