@@ -63,3 +63,4 @@ cifar-100-binary*
 wrn*
 
 *.pkl
+*.pth
