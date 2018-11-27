@@ -12,6 +12,8 @@ import dataset
 import image_processing
 import resnet
 
+import pickle
+
 import sys
 
 # Dataset Configuration
@@ -32,7 +34,7 @@ tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write l
 tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('display', 100, """Number of iterations to display training info.""")
 tf.app.flags.DEFINE_integer('test_interval', 1000, """Number of iterations to run a test""")
-tf.app.flags.DEFINE_integer('test_iter', 10000, """Number of iterations during a test""")
+tf.app.flags.DEFINE_integer('test_iter', 196, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
@@ -67,14 +69,6 @@ def train():
     assert FLAGS.image_size == 224
 
     with tf.Graph().as_default():
-        init_step = 0
-        global_step = tf.Variable(0, trainable=False, name='global_step')
-
-        # Get images and labels of ImageNet
-        with tf.variable_scope('train_image'):
-            train_images, train_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'train'), num_preprocess_threads=4)
-        with tf.variable_scope('test_image'):
-            test_images, test_labels = image_processing.distorted_inputs(dataset.Dataset('imagenet', 'validation'), num_preprocess_threads=4)
 
         # Build a Graph that computes the predictions from the inference model.
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
@@ -90,7 +84,7 @@ def train():
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
         params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
-        network = resnet.ResNet(params, hp, images, labels, global_step)
+        network = resnet.ResNet(params, hp, images, labels, None)
         network.build_model()
         network.build_train_op()
         network.count_trainable_params()
@@ -107,17 +101,6 @@ def train():
             log_device_placement=FLAGS.log_device_placement))
         sess.run(init)
 
-        # Create a saver.
-        saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
-        ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-        if ckpt and ckpt.model_checkpoint_path:
-           print('\tRestore from %s' % ckpt.model_checkpoint_path)
-           # Restores from checkpoint
-           saver.restore(sess, ckpt.model_checkpoint_path)
-           init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-        else:
-           print('No checkpoint file found. Start from the scratch.')
-        sys.stdout.flush()
 
         # Start queue runners & summary_writer
         tf.train.start_queue_runners(sess=sess)
@@ -129,8 +112,8 @@ def train():
         result_ll = [[0, 0] for _ in range(FLAGS.num_classes)] # Correct/wrong counts for each class
         test_loss = 0.0, 0.0
         for i in range(FLAGS.test_iter):
-            test_images_val, test_labels_val = sess.run([test_images, test_labels])
-            test_labels_val -= 1
+            with open('images/image_{0}'.format(i)) as f:
+                    test_images_val, test_labels_val = pickle.load(f)
             preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                         feed_dict={ images:test_images_val, labels:test_labels_val})
             test_loss += loss_value
