@@ -161,7 +161,8 @@ def train():
                     sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op],
                         feed_dict={images:train_images_val, labels:train_labels_val})
             duration = time.time() - start_time
-
+            if np.isnan(loss_value):
+                import ipdb; ipdb.set_trace()
             assert not np.isnan(loss_value)
 
             # Display & Summary(training)
