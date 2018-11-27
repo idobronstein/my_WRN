@@ -71,11 +71,11 @@ class ResNet():
         o = tf.nn.relu(o)
         o = tf.pad(o, [[0,0], [1,1], [1,1], [0,0]])
         o = tf.nn.max_pool(o, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID')
-        o_g0 = self.group(o, 'group0', 1, blocks[0])
-        o_g1 = self.group(o_g0, 'group1', 2, blocks[1])
-        o_g2 = self.group(o_g1, 'group2', 2, blocks[2])
-        o_g3 = self.group(o_g2, 'group3', 2, blocks[3])
-        o = tf.nn.avg_pool(o_g3, ksize=[1,7,7,1], strides=[1,1,1,1], padding='VALID')
+        self.o_g0 = self.group(o, 'group0', 1, blocks[0])
+        self.o_g1 = self.group(self.o_g0, 'group1', 2, blocks[1])
+        self.o_g2 = self.group(self.o_g1, 'group2', 2, blocks[2])
+        self.o_g3 = self.group(self.o_g2, 'group3', 2, blocks[3])
+        o = tf.nn.avg_pool(self.o_g3, ksize=[1,7,7,1], strides=[1,1,1,1], padding='VALID')
         o = tf.reshape(o, [-1, 2048])
         fc_weights = self.init_variable(self._params['fc.weight'], 'fc.weight')
         fc_bias = self.init_variable(self._params['fc.bias'], 'fc.bias')
@@ -83,7 +83,6 @@ class ResNet():
         
         self._logits = o
         # Probs & preds & acc
-        self.probs = tf.nn.softmax(o, name='probs')
         self.preds = tf.to_int32(tf.argmax(self._logits, 1, name='preds'))
         ones = tf.constant(np.ones([self._hp.batch_size]), dtype=tf.float32)
         zeros = tf.constant(np.zeros([self._hp.batch_size]), dtype=tf.float32)
