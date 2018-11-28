@@ -98,7 +98,7 @@ def train():
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
             log_device_placement=FLAGS.log_device_placement))
-        sess.run(init)
+        #sess.run(init)
 
 
         # Start queue runners & summary_writer
