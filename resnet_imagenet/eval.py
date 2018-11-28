@@ -167,7 +167,7 @@ def train():
         test_loss = 0.0, 0.0
         for i in range(FLAGS.test_iter):
             print("Step number: {0}".format(i))
-            with open(' /specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i), 'rb') as f:
+            with open('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i), 'rb') as f:
                     test_images_val, test_labels_val = pickle.load(f)
             b, c, h, w = test_images_val.shape
             test_images_val = np.reshape(test_images_val, [b, h, w, c])
