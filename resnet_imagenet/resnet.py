@@ -27,7 +27,7 @@ class ResNet():
         return v
 
     def init_variable(self, param, name):
-        variable = tf.constant(initializer=param)
+        variable = tf.constant(param)
         #variable = tf.get_variable(name, initializer=param)
         return variable
     
