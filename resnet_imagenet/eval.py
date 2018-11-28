@@ -116,7 +116,7 @@ def train():
                     test_images_val, test_labels_val = pickle.load(f)
             b, c, h, w = test_images_val.shape
             assert b % FLAGS.batch_size == 0
-            for j in range(b % FLAGS.batch_size):
+            for j in range(int(b / FLAGS.batch_size)):
                 batch_images_val = np.reshape(test_images_val[j : j + FLAGS.batch_size], [FLAGS.batch_size, h, w, c])
                 batch_labels_val = test_labels_val[j : j + FLAGS.batch_size]
                 preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
