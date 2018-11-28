@@ -138,11 +138,11 @@ def train():
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
         params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
-        '''network = resnet.ResNet(params, hp, images, labels, None)
+        network = resnet.ResNet(params, hp, images, labels, None)
         network.build_model()
         network.count_trainable_params()
-        '''  
-        network = g(images, params)  
+          
+        #network = g(images, params)  
         # Summaries(training)
         train_summary_op = tf.summary.merge_all()
 
