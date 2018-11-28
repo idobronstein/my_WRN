@@ -41,60 +41,6 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log dev
 
 FLAGS = tf.app.flags.FLAGS
 
-def g(inputs, params):
-    '''Bottleneck WRN-50-2 model definition
-    '''
-    def tr(v):
-        if v.ndim == 4:
-            return v.transpose(2,3,1,0)
-        elif v.ndim == 2:
-            return v.transpose()
-        return v
-    params = {k: tf.constant(tr(v)) for k, v in params.items()}
-    
-    def conv2d(x, params, name, stride=1, padding=0):
-        x = tf.pad(x, [[0,0],[padding,padding],[padding,padding],[0,0]])
-        z = tf.nn.conv2d(x, params['%s.weight'%name], [1,stride,stride,1],
-                         padding='VALID')
-        if '%s.bias'%name in params:
-            return tf.nn.bias_add(z, params['%s.bias'%name])
-        else:
-            return z
-    
-    def group(input, params, base, stride, n):
-        o = input
-        for i in range(0,n):
-            b_base = ('%s.block%d.conv') % (base, i)
-            x = o
-            o = conv2d(x, params, b_base + '0')
-            o = tf.nn.relu(o)
-            o = conv2d(o, params, b_base + '1', stride=i==0 and stride or 1, padding=1)
-            o = tf.nn.relu(o)
-            o = conv2d(o, params, b_base + '2')
-            if i == 0:
-                o += conv2d(x, params, b_base + '_dim', stride=stride)
-            else:
-                o += x
-            o = tf.nn.relu(o)
-        return o
-    
-    # determine network size by parameters
-    blocks = [sum([re.match('group%d.block\d+.conv0.weight'%j, k) is not None
-                   for k in params.keys()]) for j in range(4)]
-
-    o = conv2d(inputs, params, 'conv0', 2, 3)
-    o = tf.nn.relu(o)
-    o = tf.pad(o, [[0,0], [1,1], [1,1], [0,0]])
-    o = tf.nn.max_pool(o, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID')
-    o_g0 = group(o, params, 'group0', 1, blocks[0])
-    o_g1 = group(o_g0, params, 'group1', 2, blocks[1])
-    o_g2 = group(o_g1, params, 'group2', 2, blocks[2])
-    o_g3 = group(o_g2, params, 'group3', 2, blocks[3])
-    o = tf.nn.avg_pool(o_g3, ksize=[1,7,7,1], strides=[1,1,1,1], padding='VALID')
-    o = tf.reshape(o, [-1, 2048])
-    o = tf.matmul(o, params['fc.weight']) + params['fc.bias']
-    return o
-
 def train():
     print('[Dataset Configuration]')
     print('\tNumber of classes: %d' % FLAGS.num_classes)
@@ -142,7 +88,6 @@ def train():
         network.build_model()
         network.count_trainable_params()
           
-        #network = g(images, params)  
         # Summaries(training)
         train_summary_op = tf.summary.merge_all()
 
@@ -170,13 +115,17 @@ def train():
             with open('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i), 'rb') as f:
                     test_images_val, test_labels_val = pickle.load(f)
             b, c, h, w = test_images_val.shape
-            test_images_val = np.reshape(test_images_val, [b, h, w, c])
-            preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
-                        feed_dict={ images:test_images_val, labels:test_labels_val})
-            test_loss += loss_value
-            for j in range(FLAGS.batch_size):
-                correct = 0 if test_labels_val[j] == preds_val[j] else 1
-                result_ll[test_labels_val[j] % FLAGS.num_classes][correct] += 1
+            assert b % FLAGS.batch_size == 0
+            for j in range(b % FLAGS.batch_size)
+                batch_images_val = np.reshape(test_images_val[j : j + FLAGS.batch_size], [FLAGS.batch_size, h, w, c])
+                batch_labels_val = test_labels_val[j : j + FLAGS.batch_size]
+                preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
+                            feed_dict={ images:batch_images_val, labels:batch_labels_val})
+                print('acc: ', acc_value)
+                test_loss += loss_value
+                for k in range(FLAGS.batch_size):
+                    correct = 0 if test_labels_val[k] == preds_val[k] else 1
+                    result_ll[test_labels_val[k] % FLAGS.num_classes][correct] += 1
         test_loss /= FLAGS.test_iter
         # Summary display & output
         acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll if r[0]+r[1] > 0]
