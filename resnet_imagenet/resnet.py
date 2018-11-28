@@ -77,7 +77,7 @@ class ResNet():
         o = tf.reshape(o_4, [-1, 2048])
         fc_weights = self.init_variable(self._params['fc.weight'], 'fc.weight')
         fc_bias = self.init_variable(self._params['fc.bias'], 'fc.bias')
-        o = tf.matmul(o, fc_weights) + self.fc_bias
+        o = tf.matmul(o, fc_weights) + fc_bias
         
         self._logits = o
         # Probs & preds & acc
