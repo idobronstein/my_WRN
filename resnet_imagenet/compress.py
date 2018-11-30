@@ -119,7 +119,7 @@ def compress():
                 flag = True
             elif flag:
                 new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
-                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = new_bias
+                new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = new_bias
                 flag = False
         for k, v in params.items():
             if k not in new_params:
