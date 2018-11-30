@@ -17,10 +17,7 @@ import image_processing
 import resnet
 
 
-UPDATE_PARAM_REGEX = re.compile('(unit_)(\d_\d)(/)(bn|conv)(_\d)(/)(kernel|beta|gamma|mu|sigma)(:0)')
-SKIP_PARAM_REGEX =re.compile('(unit_)(\d_\d)/(bn)(_1)(/)(beta|gamma|mu|sigma)(:0)')
-BATCH_NORM_PARAM_NUM = 4
-BATCH_NORM_PARAN_NAMES = ['mu', 'sigma', 'beta', 'gamma']
+UPDATE_PARAM_REGEX = re.compile('(group)(\d)(/group\d.block\d.conv1/kernel:0)')
 
 
 # Dataset Configuration
@@ -35,27 +32,9 @@ tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 # cluster params
-tf.app.flags.DEFINE_integer('new_k', 1, """New Network width multiplier""")
+tf.app.flags.DEFINE_integer('compression_rate', 0.5, """New Network width multiplier""")
 
 FLAGS = tf.app.flags.FLAGS
-
-
-
-def get_kernel(block_num, unit_num, conv_num, graph, sess):
-    name = 'unit_{block_num}_{unit_num}/conv_{conv_num}/kernel:0'.format(
-            block_num=block_num, unit_num=unit_num, conv_num=conv_num)
-    kernel_tensor = graph.get_tensor_by_name(name)
-    kernel_vector = sess.run(kernel_tensor)
-    return kernel_vector
-
-def get_batch_norm(block_num, unit_num, bn_num, graph, sess):
-    name = 'unit_{block_num}_{unit_num}/bn_{bn_num}/{param}:0'
-    batch_param = []
-    for param in BATCH_NORM_PARAN_NAMES:
-        param_tensor = graph.get_tensor_by_name(name.format(block_num=block_num, unit_num=unit_num, bn_num=bn_num, param=param))
-        param_vector = sess.run(param_tensor)
-        batch_param.append(param_vector)
-    return batch_param
 
 def get_last_batch_norm(graph, sess):
     name_last = 'unit_last/bn/{param}:0'
@@ -78,29 +57,15 @@ def cluster_kernel(kernel, cluster_num):
     cluster_centers = np.moveaxis(cluster_centers, 0, 3)
     return cluster_centers, cluster_indices
 
-def add_kernel(kernel, cluster_indices, cluster_num):
-    h, w, i, o = kernel.shape
-    add_kernels = np.zeros([h, w, cluster_num, o])
+def sum_bias(bias, cluster_indices, cluster_num):
+    new_bias = np.zeros([cluster_num])
     for cluster in range(cluster_num):
         cluster_sum = 0
         for i in range(len(cluster_indices)):
             if cluster_indices[i] == cluster:
-                cluster_sum += kernel[:, :, i, :]
-        add_kernels[:, :, cluster, :] = cluster_sum
-    return add_kernels
-
-def cluster_batch_norm(batch_norm, cluster_indices, cluster_num):
-    clusters_batch_norm = np.zeros([BATCH_NORM_PARAM_NUM, cluster_num])
-    for param_index in range(BATCH_NORM_PARAM_NUM):
-        for cluster in range(cluster_num):
-            cluster_size = 0
-            cluster_sum = 0
-            for i in range(len(cluster_indices)):
-                if cluster_indices[i] == cluster:
-                    cluster_size += 1
-                    cluster_sum += batch_norm[param_index][i]
-            clusters_batch_norm[param_index][cluster] = cluster_sum / cluster_size
-    return clusters_batch_norm
+                cluster_sum += bias[i]
+        add_kernels[cluster] = cluster_sum
+    return sum_bias
 
 def compress():
 
@@ -123,7 +88,7 @@ def compress():
         params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
         network = resnet.ResNet(params, hp, images, labels, None)
         network.build_model()
-        network.count_trainable_params()
+        old_param_num = network.count_trainable_params()
 
         # Build an initialization operation to run below.
         init = tf.initialize_all_variables()
@@ -136,73 +101,38 @@ def compress():
         
         graph = tf.get_default_graph()
         import ipdb; ipdb.set_trace()
-        block_num = 3
-        conv_num = 2
-        old_kernels_to_cluster = []
-        old_kernels_to_add = []
-        old_batch_norm = []     
-        for i in range(1, block_num + 1):
-            for j in range(FLAGS.num_residual_units):
-                    old_kernels_to_cluster.append(get_kernel(i, j, 1, graph, sess))
-                    old_kernels_to_add.append(get_kernel(i, j, 2, graph, sess))
-                    old_batch_norm.append(get_batch_norm(i, j, 2, graph, sess))
-        #old_batch_norm = old_batch_norm[1:]
-        #old_batch_norm.append(get_last_batch_norm(graph, sess))
-
-        new_params = []
-        new_width = [16, int(16 * FLAGS.new_k), int(32 * FLAGS.new_k), int(64 * FLAGS.new_k)]
-        for i in range(len(old_batch_norm)):
-            cluster_num = new_width[int(i / 4) + 1]
-            cluster_kernels, cluster_indices = cluster_kernel(old_kernels_to_cluster[i], cluster_num)
-            add_kernels = add_kernel(old_kernels_to_add[i], cluster_indices, cluster_num)
-            cluster_batchs_norm = cluster_batch_norm(old_batch_norm[i], cluster_indices, cluster_num)
-            new_params.append(cluster_kernels)
-            for p in range(BATCH_NORM_PARAM_NUM):
-                new_params.append(cluster_batchs_norm[p])
-            new_params.append(add_kernels)
-    
-        # save variables
-        init_params = []
-        new_param_index = 0
-        for var in tf.global_variables():
-            update_match = UPDATE_PARAM_REGEX.match(var.name)
-            skip_match = SKIP_PARAM_REGEX.match(var.name)
-            if update_match and not skip_match:
-                print("update {}".format(var.name))
-                init_params.append((new_params[new_param_index], var.name))
-                new_param_index += 1
+        flag = False
+        new_params = params
+        for var in tf.trainable_variables():
+            match = UPDATE_PARAM_REGEX.match(var.name)
+            if match:
+                group_num = match.groups()[1]
+                cluster_num = network.blocks[group_num] * FLAGS.compression_rate
+                cluster_centers, cluster_indices = cluster_kernel(var, cluster_num)
+                new_params[var.name] = cluster_centers
+                flag = True
             else:
-                print("not update {}".format(var.name))
-                var_vector = sess.run(var)
-                init_params.append((var_vector, var.name))
-
+                new_bias = sum_bias(var, cluster_indices, cluster_num)
+                new_params[var.name] = new_bias
+                flag = False
         #close old graph
         sess.close()
     tf.reset_default_graph()
 
     # build new graph and eval
     with tf.Graph().as_default():
-        # The CIFAR-100 dataset
-        with tf.variable_scope('test_image'):
-            test_images, test_labels = data_input.input_fn(FLAGS.data_dir, FLAGS.batch_size, train_mode=FLAGS.train_data, num_threads=1)
 
-        # The class labels
-        with open(os.path.join(FLAGS.data_dir, 'fine_label_names.txt')) as fd:
-            classes = [temp.strip() for temp in fd.readlines()]
-
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, data_input.HEIGHT, data_input.WIDTH, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
-
-        new_network = resnet.ResNet(hp, images, labels, None, init_params, FLAGS.new_k)
+        new_network = resnet.ResNet(new_bias, hp, images, labels, None)
         new_network.build_model()
+        new_param_num = network.count_trainable_params()
+        print("compression rate: ", new_param_num / old_param_num * 100, " %")
 
         init = tf.initialize_all_variables()
         # Start running operations on the Graph.
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
             log_device_placement=FLAGS.log_device_placement))
-        #sess.run(init)
-
+        sess.run(init)
 
         # Start queue runners & summary_writer
         tf.train.start_queue_runners(sess=sess)
