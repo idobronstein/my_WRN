@@ -111,7 +111,7 @@ def compress():
                 cluster_centers, cluster_indices = cluster_kernel(var, cluster_num)
                 new_params[var.name] = cluster_centers
                 flag = True
-            else:
+            if flag:
                 new_bias = sum_bias(var, cluster_indices, cluster_num)
                 new_params[var.name] = new_bias
                 flag = False
