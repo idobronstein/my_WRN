@@ -125,7 +125,7 @@ def compress():
     # build new graph and eval
     with tf.Graph().as_default():
 
-        new_network = resnet.ResNet(new_bias, hp, images, labels, None)
+        new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()
         new_param_num = network.count_trainable_params()
         print("compression rate: ", new_param_num / old_param_num * 100, " %")
