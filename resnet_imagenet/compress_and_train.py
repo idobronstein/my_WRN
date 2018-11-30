@@ -255,17 +255,16 @@ def compress():
 
             # Train
             start_time = time.time()
-            if index_train_file % 256 == 0:
-                train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(image_train_file) , False)
-                image_train_file += 1
-                index_train_file = 0
-            batch_images_val = train_images_val[index_train_file : index_train_file + FLAGS.batch_size]
-            batch_labels_val = train_labels_val[index_train_file : index_train_file + FLAGS.batch_size]
-            print(batch_labels_val)
-            index_train_file += FLAGS.batch_size
+            image_batch = np.zeros(FLAGS.batch_size)
+            labels_batch = np.zeros(FLAGS.batch_size)
+            file_index = [random.randint(0, 14200) for _ in range(FLAGS.batch_size)]
+            image_index = [random.randint(0, 256) for _ in range(FLAGS.test_iter)]
+            for i in range(FLAGS.batch_size):
+                train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
+                image_batch[i] = train_images_val[image_index[i]]
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
-                        feed_dict={images:batch_images_val, labels:batch_labels_val})
+                        feed_dict={images:image_batch, labels:labels_batch})
             duration = time.time() - start_time
             assert not np.isnan(loss_value)
 
