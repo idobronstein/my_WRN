@@ -64,7 +64,7 @@ class ResNet():
         # determine network size by parameters
         self.blocks = [sum([re.match('group%d.block\d+.conv0.weight'%j, k) is not None
                        for k in self._params.keys()]) for j in range(4)]
-        import ipdb; ipdb.set_trace()
+        
         o = self.conv2d(self._images, 'conv0', 2, 3)
         o = tf.nn.relu(o)
         o = tf.pad(o, [[0,0], [1,1], [1,1], [0,0]])
