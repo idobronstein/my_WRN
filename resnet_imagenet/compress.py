@@ -90,8 +90,8 @@ def compress():
     with tf.Graph().as_default():
 
         # Build a Graph that computes the predictions from the inference model.
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [None])
 
         # Build model
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
@@ -151,8 +151,8 @@ def compress():
     # build new graph and eval
     with tf.Graph().as_default():
 
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [None])
 
         new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()

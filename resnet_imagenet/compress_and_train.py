@@ -115,8 +115,8 @@ def compress():
     with tf.Graph().as_default():
 
         # Build a Graph that computes the predictions from the inference model.
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [None])
 
         # Build model
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
@@ -178,8 +178,8 @@ def compress():
         init_step = 0
         global_step = tf.Variable(0, trainable=False, name='global_step')
 
-        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
-        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [None])
         
         decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
