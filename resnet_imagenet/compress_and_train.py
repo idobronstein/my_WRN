@@ -224,7 +224,7 @@ def compress():
                 test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)]
                 for i in test_batches:
                     test_images_val, test_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
-                    loss_value, acc_value = sess.run([network.loss, network.acc],
+                    loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                 feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
                     test_acc += acc_value
@@ -246,7 +246,7 @@ def compress():
             start_time = time.time()
             train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(step))
             _, lr_value, loss_value, acc_value, train_summary_str = \
-                    sess.run([network.train_op, network.lr, network.loss, network.acc, train_summary_op],
+                    sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:train_images_val, labels:train_labels_val})
             duration = time.time() - start_time
             assert not np.isnan(loss_value)
