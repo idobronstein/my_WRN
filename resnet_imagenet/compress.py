@@ -159,6 +159,7 @@ def compress():
             for j in range(int(b / FLAGS.batch_size)):
                 batch_images_val =  np.moveaxis(test_images_val[j : j + FLAGS.batch_size], 1, -1)
                 batch_labels_val = test_labels_val[j : j + FLAGS.batch_size]
+                import ipdb; ipdb.set_trace()
                 preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
                             feed_dict={ images:batch_images_val, labels:batch_labels_val})
                 print('acc: ', acc_value)
