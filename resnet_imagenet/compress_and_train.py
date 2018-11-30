@@ -108,7 +108,7 @@ def get_image_file(image_path, is_np=True):
 def compress():
 
     assert FLAGS.image_size == 224
-    assert FLAGS.batch_size == 2
+    assert FLAGS.batch_size == 4
 
     with tf.Graph().as_default():
 
@@ -230,7 +230,7 @@ def compress():
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
                 test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)]
-                test_batches_index = [random.randint(0, 256 / FLAGS.batch_size) for _ in range(FLAGS.test_iter)]
+                test_batches_index = [random.randint(0, 256 / FLAGS.batch_size - 1) for _ in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
                     print(i,j)
                     test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
@@ -259,7 +259,7 @@ def compress():
             image_batch = np.zeros([FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
             labels_batch = np.zeros(FLAGS.batch_size)
             file_index = [random.randint(0, 1420) for _ in range(FLAGS.batch_size)]
-            image_index = [random.randint(0, 256) for _ in range(FLAGS.test_iter)]
+            image_index = [random.randint(0, 255) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
                 image_batch[i] = train_images_val[image_index[i]]
