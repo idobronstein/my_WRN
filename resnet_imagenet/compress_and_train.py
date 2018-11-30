@@ -36,7 +36,6 @@ tf.app.flags.DEFINE_integer('num_test_instance', 49920, """Number of test images
 # Dataset Configuration
 tf.app.flags.DEFINE_string('param_dir', './wide-resnet-50-2-export.pth', """Resnet-50-2-bottelneck pre-train""")
 tf.app.flags.DEFINE_integer('num_classes', 1000, """Number of classes in the dataset.""")
-tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images.""")
 
 # Training Configuration
 tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write log and checkpoint.""")
