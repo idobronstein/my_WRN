@@ -106,7 +106,7 @@ def compress():
             var_vec = sess.run(var)
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
-                print("compress: ", var.name)s
+                print("compress: ", var.name)
                 group_num = int(match.groups()[1])
                 cluster_num = int(var.shape[-1] * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
