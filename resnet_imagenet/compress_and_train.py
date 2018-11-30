@@ -232,7 +232,7 @@ def compress():
                 test_batches = [random.randint(0, 196) for _ in range(FLAGS.test_iter)]
                 test_batches_index = [random.randint(0, 32) for _ in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
-                    test_images_val, test_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
+                    test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
                     test_images_val = test_images_val[j : FLAGS.batch_size]
                     test_labels_val = test_labels_val[j : FLAGS.batch_size]
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
@@ -256,7 +256,7 @@ def compress():
             # Train
             start_time = time.time()
             if step % 256 == 0:
-                train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(image_train_file) , False)
+                train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(image_train_file) , False)
                 image_train_file += 1
                 index_train_file = 0
             batch_images_val = image_train_file[index_train_file : index_train_file + FLAGS.batch_size]
