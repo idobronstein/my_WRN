@@ -46,7 +46,7 @@ class ResNet():
                 return tf.nn.bias_add(z, bias)
             else:
                 return z
-    
+
     def group(self, input, base, stride, n):
         with tf.variable_scope(base) as scope:
             o = input
@@ -110,7 +110,7 @@ class ResNet():
         tf.summary.scalar('learing_rate', self.lr)
         
         # Gradient descent step
-        opt = tf.train.MomentumOptimizer(self.lr, self._hp.momentum)
+        opt = tf.train.GradientDescentOptimizer(self.lr)
         grads_and_vars = opt.compute_gradients(self._total_loss, tf.trainable_variables())
         apply_grad_op = opt.apply_gradients(grads_and_vars, global_step=self._global_step)
         self.train_op = apply_grad_op
