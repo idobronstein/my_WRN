@@ -20,6 +20,11 @@ class ResNet():
         self._global_step = global_step
 
     def tr(self, v):
+        if len(v) == 2:
+            if v[1]:
+                v = v[0]
+            else:
+                return v[0]
         if v.ndim == 4:
             return v.transpose(2,3,1,0)
         elif v.ndim == 2:

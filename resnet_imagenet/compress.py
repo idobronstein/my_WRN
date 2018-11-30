@@ -115,15 +115,15 @@ def compress():
                 block_num = int(match.groups()[1])
                 cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
-                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = cluster_centers
+                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
                 flag = True
             elif flag:
                 new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
-                new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = new_bias
+                new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
                 flag = False
         for k, v in params.items():
             if k not in new_params:
-                new_params[k] = v
+                new_params[k] = (v, True)
         #close old graph
         sess.close()
     tf.reset_default_graph()
