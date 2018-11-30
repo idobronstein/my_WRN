@@ -259,6 +259,7 @@ def compress():
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(image_train_file) , False)
                 image_train_file += 1
                 index_train_file = 0
+            print(image_train_file, index_train_file)
             batch_images_val = train_images_val[index_train_file : index_train_file + FLAGS.batch_size]
             batch_labels_val = train_labels_val[index_train_file : index_train_file + FLAGS.batch_size]
             index_train_file += FLAGS.batch_size
