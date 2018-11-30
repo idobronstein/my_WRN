@@ -261,6 +261,7 @@ def compress():
                 index_train_file = 0
             batch_images_val = train_images_val[index_train_file : index_train_file + FLAGS.batch_size]
             batch_labels_val = train_labels_val[index_train_file : index_train_file + FLAGS.batch_size]
+            print(batch_labels_val)
             index_train_file += FLAGS.batch_size
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
