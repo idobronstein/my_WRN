@@ -192,6 +192,9 @@ def compress():
         new_param_num = new_network.count_trainable_params()
         print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
 
+        # Summaries(training)
+        train_summary_op = tf.summary.merge_all()
+        
         init = tf.initialize_all_variables()
         # Start running operations on the Graph.
         sess = tf.Session(config=tf.ConfigProto(
