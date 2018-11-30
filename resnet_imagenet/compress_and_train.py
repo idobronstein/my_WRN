@@ -22,6 +22,14 @@ CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
+
+# Optimization Configuration
+tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
+tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
+tf.app.flags.DEFINE_float('initial_lr', 0.001, """Initial learning rate""")
+tf.app.flags.DEFINE_float('lr_step_epoch', 3.0, """Epochs after which learing rate decays""")
+tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
+
 # Dataset Configuration
 tf.app.flags.DEFINE_string('param_dir', './wide-resnet-50-2-export.pth', """Resnet-50-2-bottelneck pre-train""")
 tf.app.flags.DEFINE_integer('num_classes', 1000, """Number of classes in the dataset.""")
@@ -163,6 +171,14 @@ def compress():
 
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
+        hp = resnet.HParams(batch_size=FLAGS.batch_size,
+                    num_classes=FLAGS.num_classes,
+                    weight_decay=FLAGS.l2_weight,
+                    initial_lr=FLAGS.initial_lr,
+                    decay_step=decay_step,
+                    lr_decay=FLAGS.lr_decay,
+                    momentum=FLAGS.momentum)
 
         new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()
