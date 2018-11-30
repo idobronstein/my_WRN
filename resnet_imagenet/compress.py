@@ -131,7 +131,7 @@ def compress():
 
         new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()
-        new_param_num = network.count_trainable_params()
+        new_param_num = new_network.count_trainable_params()
         print("compression rate: ", new_param_num / old_param_num * 100, " %")
 
         init = tf.initialize_all_variables()
@@ -159,8 +159,7 @@ def compress():
             for j in range(int(b / FLAGS.batch_size)):
                 batch_images_val =  np.moveaxis(test_images_val[j : j + FLAGS.batch_size], 1, -1)
                 batch_labels_val = test_labels_val[j : j + FLAGS.batch_size]
-                import ipdb; ipdb.set_trace()
-                preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
+                preds_val, loss_value, acc_value = sess.run([new_network.preds, new_network.loss, new_network.acc],
                             feed_dict={ images:batch_images_val, labels:batch_labels_val})
                 print('acc: ', acc_value)
                 test_loss += loss_value
