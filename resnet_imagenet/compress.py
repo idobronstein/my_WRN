@@ -100,7 +100,6 @@ def compress():
         sess.run(init)
         
         graph = tf.get_default_graph()
-        import ipdb; ipdb.set_trace()
         flag = False
         new_params = params
         for var in tf.trainable_variables():
