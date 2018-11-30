@@ -98,7 +98,7 @@ def train():
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
             log_device_placement=FLAGS.log_device_placement))
-        #sess.run(init)
+        sess.run(init)
 
 
         # Start queue runners & summary_writer
@@ -124,7 +124,7 @@ def train():
                 print('acc: ', acc_value)
                 test_loss += loss_value
                 for k in range(FLAGS.batch_size):
-                    correct = 0 if test_labels_val[k] == preds_val[k] else 1
+                    correct = 0 if test_labels_val[k] ==    [k] else 1
                     result_ll[test_labels_val[k] % FLAGS.num_classes][correct] += 1
         test_loss /= FLAGS.test_iter
         # Summary display & output
