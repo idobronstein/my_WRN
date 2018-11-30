@@ -17,7 +17,7 @@ import image_processing
 import resnet
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(\d)(/group\d.block\d.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(1)(/group1.block\d.conv1/kernel:0)')
 
 
 # Dataset Configuration
@@ -106,6 +106,7 @@ def compress():
             var_vec = sess.run(var)
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
+                print("compress: ", var.name)s
                 group_num = int(match.groups()[1])
                 cluster_num = int(var.shape[-1] * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
