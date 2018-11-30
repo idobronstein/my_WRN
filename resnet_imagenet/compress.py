@@ -125,6 +125,9 @@ def compress():
     # build new graph and eval
     with tf.Graph().as_default():
 
+        images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
+        labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+
         new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()
         new_param_num = network.count_trainable_params()
