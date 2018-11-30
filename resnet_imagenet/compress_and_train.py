@@ -232,6 +232,7 @@ def compress():
                 test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)]
                 test_batches_index = [random.randint(0, 256 / FLAGS.batch_size) for _ in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
+                    print(i,j)
                     test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
                     test_images_val = test_images_val[j : j + FLAGS.batch_size]
                     test_labels_val = test_labels_val[j : j + FLAGS.batch_size]
