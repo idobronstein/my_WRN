@@ -31,7 +31,6 @@ tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images
 # Testing Configuration
 tf.app.flags.DEFINE_bool('train_data', False, """Whether to test over training set.""")
 tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
-tf.app.flags.DEFINE_string('output', '', """Path to the output txt.""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
@@ -198,45 +197,45 @@ def compress():
         new_network.build_model()
 
         init = tf.initialize_all_variables()
+        # Start running operations on the Graph.
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
             log_device_placement=FLAGS.log_device_placement))
-        sess.run(init)
+        #sess.run(init)
+
+
+        # Start queue runners & summary_writer
+        tf.train.start_queue_runners(sess=sess)
+        if not os.path.exists(FLAGS.train_dir):
+            os.mkdir(FLAGS.train_dir)
+        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
 
         # Testing!
         result_ll = [[0, 0] for _ in range(FLAGS.num_classes)] # Correct/wrong counts for each class
         test_loss = 0.0, 0.0
         for i in range(FLAGS.test_iter):
-            test_images_val, test_labels_val = sess.run([test_images, test_labels])
-            preds_val, loss_value, acc_value = sess.run([new_network.preds, new_network.loss, new_network.acc],
-                        feed_dict={new_network.is_train:False, images:test_images_val, labels:test_labels_val})
-            test_loss += loss_value
-            for j in range(FLAGS.batch_size):
-                correct = 0 if test_labels_val[j] == preds_val[j] else 1
-                result_ll[test_labels_val[j] % FLAGS.num_classes][correct] += 1
+            print("Step number: {0}".format(i))
+            with open('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i), 'rb') as f:
+                    test_images_val, test_labels_val = pickle.load(f)
+            b, c, h, w = test_images_val.shape
+            assert b % FLAGS.batch_size == 0
+            for j in range(int(b / FLAGS.batch_size)):
+                batch_images_val =  np.moveaxis(test_images_val[j : j + FLAGS.batch_size], 1, -1)
+                batch_labels_val = test_labels_val[j : j + FLAGS.batch_size]
+                preds_val, loss_value, acc_value = sess.run([network.preds, network.loss, network.acc],
+                            feed_dict={ images:batch_images_val, labels:batch_labels_val})
+                print('acc: ', acc_value)
+                test_loss += loss_value
+                for k in range(FLAGS.batch_size):
+                    correct = 0 if test_labels_val[k] ==    [k] else 1
+                    result_ll[test_labels_val[k] % FLAGS.num_classes][correct] += 1
         test_loss /= FLAGS.test_iter
-
         # Summary display & output
-        acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll]
+        acc_list = [float(r[0])/float(r[0]+r[1]) for r in result_ll if r[0]+r[1] > 0]
         result_total = np.sum(np.array(result_ll), axis=0)
         acc_total = float(result_total[0])/np.sum(result_total)
-
-        print('Class    \t\t\tT\tF\tAcc.')
         format_str = '%-31s %7d %7d %.5f'
-        for i in range(FLAGS.num_classes):
-            print(format_str % (classes[i], result_ll[i][0], result_ll[i][1], acc_list[i]))
         print(format_str % ('(Total)', result_total[0], result_total[1], acc_total))
-
-        # Output to file(if specified)
-        if FLAGS.output.strip():
-            with open(FLAGS.output, 'w') as fd:
-                fd.write('Class    \t\t\tT\tF\tAcc.\n')
-                format_str = '%-31s %7d %7d %.5f'
-                for i in range(FLAGS.num_classes):
-                    t, f = result_ll[i]
-                    format_str = '%-31s %7d %7d %.5f\n'
-                    fd.write(format_str % (classes[i].replace(' ', '-'), t, f, acc_list[i]))
-                fd.write(format_str % ('(Total)', result_total[0], result_total[1], acc_total))
 
 
 def main(argv=None):  # pylint: disable=unused-argument
