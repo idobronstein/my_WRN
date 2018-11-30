@@ -26,6 +26,7 @@ tf.app.flags.DEFINE_integer('num_classes', 1000, """Number of classes in the dat
 tf.app.flags.DEFINE_integer('num_test_instance', 10000, """Number of test images.""")
 
 # Testing Configuration
+tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write log and checkpoint.""")
 tf.app.flags.DEFINE_bool('train_data', False, """Whether to test over training set.""")
 tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
