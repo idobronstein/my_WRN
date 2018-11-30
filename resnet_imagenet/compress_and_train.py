@@ -95,7 +95,7 @@ def sum_kernel(kernel, cluster_indices, cluster_num):
         add_kernels[:, :, cluster, :] = cluster_sum
     return add_kernels
 
-def get_batch(image_path, is_np=True):
+def get_image_file(image_path, is_np=True):
     with open(image_path, 'rb') as f:
             test_images_val, test_labels_val = pickle.load(f)
     if not is_np:
@@ -104,9 +104,10 @@ def get_batch(image_path, is_np=True):
     test_images_val = np.moveaxis(test_images_val, 1, -1)
     return test_images_val, test_labels_val  
 
+
 def compress():
 
-    assert FLAGS.image_size == 224
+    assert FLAGS.image_size == 8
     assert FLAGS.batch_size == 256
 
     with tf.Graph().as_default():
@@ -194,7 +195,7 @@ def compress():
 
         # Summaries(training)
         train_summary_op = tf.summary.merge_all()
-        
+
         init = tf.initialize_all_variables()
         # Start running operations on the Graph.
         sess = tf.Session(config=tf.ConfigProto(
@@ -222,15 +223,20 @@ def compress():
 
         # Training!
         test_best_acc = 0.0
+        image_train_file = 0
+        index_train_file = 0
         for step in range(init_step, FLAGS.max_steps):
             # Test
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
-                test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)]
-                for i in test_batches:
+                test_batches = [random.randint(0, 196) for _ in range(FLAGS.test_iter)]
+                test_batches_index = [random.randint(0, 32) for _ in range(FLAGS.test_iter)]
+                for i, j in zip(test_batches, test_batches_index):
                     test_images_val, test_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
+                    test_images_val = test_images_val[j : FLAGS.batch_size]
+                    test_labels_val = test_labels_val[j : FLAGS.batch_size]
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                feed_dict={images:test_images_val, labels:test_labels_val})
+                                feed_dict={images:test_images_val, lajbels:test_labels_val})
                     test_loss += loss_value
                     test_acc += acc_value
                 test_loss /= FLAGS.test_iter
@@ -249,10 +255,16 @@ def compress():
 
             # Train
             start_time = time.time()
-            train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(step) , False)
+            if step % 256 == 0:
+                train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(image_train_file) , False)
+                image_train_file += 1
+                index_train_file = 0
+            batch_images_val = image_train_file[index_train_file : index_train_file + FLAGS.batch_size]
+            batch_labels_val = train_labels_val[index_train_file : index_train_file + FLAGS.batch_size]
+            index_train_file += FLAGS.batch_size
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
-                        feed_dict={images:train_images_val, labels:train_labels_val})
+                        feed_dict={images:batch_images_val, labels:batch_labels_val})
             duration = time.time() - start_time
             assert not np.isnan(loss_value)
 
