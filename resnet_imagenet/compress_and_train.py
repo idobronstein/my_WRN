@@ -85,7 +85,7 @@ def sum_kernel(kernel, cluster_indices, cluster_num):
         add_kernels[:, :, cluster, :] = cluster_sum
     return add_kernels
 
-def get_batch(image_path, batch_size)
+def get_batch(image_path, batch_size):
     with open(image_path, 'rb') as f:
             test_images_val, test_labels_val = pickle.load(f)
     b, c, h, w = test_images_val.shape
