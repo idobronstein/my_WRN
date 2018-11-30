@@ -32,7 +32,7 @@ tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 # cluster params
-tf.app.flags.DEFINE_integer('compression_rate', 0.5, """New Network width multiplier""")
+tf.app.flags.DEFINE_float('compression_rate', 0.5, """New Network width multiplier""")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -107,7 +107,7 @@ def compress():
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
                 group_num = match.groups()[1]
-                cluster_num = network.blocks[group_num] * FLAGS.compression_rate
+                cluster_num = int(network.blocks[group_num] * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var, cluster_num)
                 new_params[var.name] = cluster_centers
                 flag = True
