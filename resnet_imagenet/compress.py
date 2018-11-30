@@ -105,6 +105,7 @@ def compress():
         for var in tf.trainable_variables():
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
+                import ipdb; ipdb.set_trace()
                 group_num = int(match.groups()[1])
                 cluster_num = int(network.blocks[group_num] * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var, cluster_num)
