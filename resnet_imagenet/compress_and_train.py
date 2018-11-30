@@ -147,6 +147,7 @@ def compress():
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
                 print("compress: ", var.name)
+                import ipdb; ipdb.set_trace()
                 group_num = int(match.groups()[1])
                 block_num = int(match.groups()[1])
                 cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
