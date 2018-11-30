@@ -257,7 +257,7 @@ def compress():
             start_time = time.time()
             image_batch = np.zeros(FLAGS.batch_size)
             labels_batch = np.zeros(FLAGS.batch_size)
-            file_index = [random.randint(0, 14200) for _ in range(FLAGS.batch_size)]
+            file_index = [random.randint(0, 1420) for _ in range(FLAGS.batch_size)]
             image_index = [random.randint(0, 256) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
