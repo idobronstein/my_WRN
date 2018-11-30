@@ -233,8 +233,8 @@ def compress():
                 test_batches_index = [random.randint(0, 32) for _ in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
                     test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
-                    test_images_val = test_images_val[j : FLAGS.batch_size]
-                    test_labels_val = test_labels_val[j : FLAGS.batch_size]
+                    test_images_val = test_images_val[j : j + FLAGS.batch_size]
+                    test_labels_val = test_labels_val[j : j + FLAGS.batch_size]
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                 feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
