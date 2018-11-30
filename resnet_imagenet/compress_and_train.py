@@ -105,7 +105,7 @@ def get_image_file(image_path, is_np=True):
         test_images_val = np.moveaxis(test_images_val, 1, -1)
         return test_images_val, test_labels_val
     except:
-        return None, None
+        import ipdb; ipdb.set_trace()
 
 
 def compress():
@@ -264,8 +264,6 @@ def compress():
             image_index = [random.randint(0, 255) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
-                if train_images_val is None:
-                    get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i] + 1) , False)
                 image_batch[i] = train_images_val[image_index[i]]
                 labels_batch[i] = train_labels_val[image_index[i]]
             print(labels_batch)
