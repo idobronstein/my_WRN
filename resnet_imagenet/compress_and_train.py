@@ -263,6 +263,7 @@ def compress():
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
                 image_batch[i] = train_images_val[image_index[i]]
                 labels_batch[i] = train_labels_val[image_index[i]]
+            print(labels_batch)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:image_batch, labels:labels_batch})
