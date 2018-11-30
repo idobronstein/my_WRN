@@ -29,6 +29,9 @@ tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer"
 tf.app.flags.DEFINE_float('initial_lr', 0.001, """Initial learning rate""")
 tf.app.flags.DEFINE_float('lr_step_epoch', 3.0, """Epochs after which learing rate decays""")
 tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
+tf.app.flags.DEFINE_integer('num_train_instance', 1000000, """Number of training images.""")
+tf.app.flags.DEFINE_integer('num_test_instance', 49920, """Number of test images.""")
+
 
 # Dataset Configuration
 tf.app.flags.DEFINE_string('param_dir', './wide-resnet-50-2-export.pth', """Resnet-50-2-bottelneck pre-train""")
