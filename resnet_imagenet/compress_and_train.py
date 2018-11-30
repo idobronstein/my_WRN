@@ -95,10 +95,12 @@ def sum_kernel(kernel, cluster_indices, cluster_num):
         add_kernels[:, :, cluster, :] = cluster_sum
     return add_kernels
 
-def get_batch(image_path):
+def get_batch(image_path, is_np=True):
     with open(image_path, 'rb') as f:
             test_images_val, test_labels_val = pickle.load(f)
-    b, c, h, w = test_images_val.shape
+    if not is_np:
+        test_images_val = test_images_val.numpy()
+        test_labels_val = test_labels_val.numpy()
     test_images_val = np.moveaxis(test_images_val, 1, -1)
     return test_images_val, test_labels_val  
 
@@ -244,7 +246,7 @@ def compress():
 
             # Train
             start_time = time.time()
-            train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(step))
+            train_images_val, train_labels_val = get_batch('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(step) , False)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:train_images_val, labels:train_labels_val})
