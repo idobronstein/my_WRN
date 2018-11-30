@@ -103,18 +103,21 @@ def compress():
         flag = False
         new_params = params
         for var in tf.trainable_variables():
+            var_vec = sess.run(var)
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
                 import ipdb; ipdb.set_trace()
                 group_num = int(match.groups()[1])
                 cluster_num = int(var.shape[-1] * FLAGS.compression_rate)
-                cluster_centers, cluster_indices = cluster_kernel(var, cluster_num)
+                cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                 new_params[var.name] = cluster_centers
                 flag = True
-            if flag:
-                new_bias = sum_bias(var, cluster_indices, cluster_num)
+            elif flag:
+                new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
                 new_params[var.name] = new_bias
                 flag = False
+            else:
+                new_params[var.name] = var_vec
         #close old graph
         sess.close()
     tf.reset_default_graph()
