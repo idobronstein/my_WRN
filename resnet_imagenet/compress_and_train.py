@@ -236,7 +236,7 @@ def compress():
                     test_images_val = test_images_val[j : FLAGS.batch_size]
                     test_labels_val = test_labels_val[j : FLAGS.batch_size]
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                feed_dict={images:test_images_val, lajbels:test_labels_val})
+                                feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
                     test_acc += acc_value
                 test_loss /= FLAGS.test_iter
