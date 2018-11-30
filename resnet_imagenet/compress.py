@@ -17,7 +17,10 @@ import image_processing
 import resnet
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(1)(/group1.block\d.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(1)(/group1.block)(\d)(.conv1/kernel:0)')
+CONV1_KERNEL_NAME = 'group{group_num}.block{block_num}.conv1.weight'
+CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
+
 
 
 # Dataset Configuration
@@ -109,16 +112,18 @@ def compress():
             if match:
                 print("compress: ", var.name)
                 group_num = int(match.groups()[1])
+                block_num = int(match.groups()[1])
                 cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
-                new_params[var.name] = cluster_centers
+                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = cluster_centers
                 flag = True
             elif flag:
                 new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
-                new_params[var.name] = new_bias
+                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = new_bias
                 flag = False
-            else:
-                new_params[var.name] = var_vec
+        for k, v in params.items():
+            if k not in new_params:
+                new_params[k] = v
         #close old graph
         sess.close()
     tf.reset_default_graph()
