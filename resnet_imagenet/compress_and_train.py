@@ -108,7 +108,7 @@ def get_image_file(image_path, is_np=True):
 def compress():
 
     assert FLAGS.image_size == 224
-    assert FLAGS.batch_size == 8
+    assert FLAGS.batch_size == 2
 
     with tf.Graph().as_default():
 
@@ -230,7 +230,7 @@ def compress():
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
                 test_batches = [random.randint(0, 196) for _ in range(FLAGS.test_iter)]
-                test_batches_index = [random.randint(0, 32) for _ in range(FLAGS.test_iter)]
+                test_batches_index = [random.randint(0, 256 / FLAGS.batch_size) for _ in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
                     test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
                     test_images_val = test_images_val[j : j + FLAGS.batch_size]
