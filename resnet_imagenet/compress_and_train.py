@@ -17,7 +17,7 @@ import image_processing
 import resnet
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(3)(/group3.block)(\d)(.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(1)(/group1.block)(\d)(.conv1/kernel:0)')
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -147,9 +147,8 @@ def compress():
             match = UPDATE_PARAM_REGEX.match(var.name)
             if match:
                 print("compress: ", var.name)
-                import ipdb; ipdb.set_trace()
                 group_num = int(match.groups()[1])
-                block_num = int(match.groups()[1])
+                block_num = int(match.groups()[3])
                 cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                 new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
