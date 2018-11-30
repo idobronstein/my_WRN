@@ -255,7 +255,7 @@ def compress():
 
             # Train
             start_time = time.time()
-            image_batch = np.zeros(FLAGS.batch_size)
+            image_batch = np.zeros([FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
             labels_batch = np.zeros(FLAGS.batch_size)
             file_index = [random.randint(0, 1420) for _ in range(FLAGS.batch_size)]
             image_index = [random.randint(0, 256) for _ in range(FLAGS.test_iter)]
