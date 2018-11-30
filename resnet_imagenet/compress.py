@@ -18,7 +18,8 @@ import resnet
 
 
 UPDATE_PARAM_REGEX = re.compile('(group)(1)(/group1.block)(\d)(.conv1/kernel:0)')
-CONV1_KERNEL_NAME = 'group{group_num}.block{block_num}.conv1.weight'
+CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
+CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
 
@@ -71,6 +72,17 @@ def sum_bias(bias, cluster_indices, cluster_num):
         new_bias[cluster] = cluster_sum
     return new_bias
 
+def sum_kernel(kernel, cluster_indices, cluster_num):
+    h, w, i, o = kernel.shape
+    add_kernels = np.zeros([h, w, cluster_num, o])
+    for cluster in range(cluster_num):
+        cluster_sum = 0
+        for i in range(len(cluster_indices)):
+            if cluster_indices[i] == cluster:
+                cluster_sum += kernel[:, :, i, :]
+        add_kernels[:, :, cluster, :] = cluster_sum
+    return add_kernels
+
 def compress():
 
     assert FLAGS.image_size == 224
@@ -104,7 +116,8 @@ def compress():
         sess.run(init)
         
         graph = tf.get_default_graph()
-        flag = False
+        flag1 = False
+        flag2 = False
         new_params = params
         for var in tf.trainable_variables():
             var_vec = sess.run(var)
@@ -115,15 +128,22 @@ def compress():
                 block_num = int(match.groups()[1])
                 cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                 cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
-                new_params[CONV1_KERNEL_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
-                flag = True
-            elif flag:
+                new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
+                flag1 = True
+            elif flag1:
                 new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
                 new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
-                flag = False
+                flag1 = False
+                flag2 = True
+            elif flag2:
+                new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
+                new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
+                flag2 = False
+        
         for k, v in params.items():
             if k not in new_params:
                 new_params[k] = (v, True)
+        
         #close old graph
         sess.close()
     tf.reset_default_graph()
