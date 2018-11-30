@@ -96,19 +96,22 @@ def sum_kernel(kernel, cluster_indices, cluster_num):
     return add_kernels
 
 def get_image_file(image_path, is_np=True):
-    with open(image_path, 'rb') as f:
-            test_images_val, test_labels_val = pickle.load(f)
-    if not is_np:
-        test_images_val = test_images_val.numpy()
-        test_labels_val = test_labels_val.numpy()
-    test_images_val = np.moveaxis(test_images_val, 1, -1)
-    return test_images_val, test_labels_val  
+    try:
+        with open(image_path, 'rb') as f:
+                test_images_val, test_labels_val = pickle.load(f)
+        if not is_np:
+            test_images_val = test_images_val.numpy()
+            test_labels_val = test_labels_val.numpy()
+        test_images_val = np.moveaxis(test_images_val, 1, -1)
+        return test_images_val, test_labels_val
+    except:
+        return None, None
 
 
 def compress():
 
     assert FLAGS.image_size == 224
-    assert FLAGS.batch_size == 4
+    assert FLAGS.batch_size == 1
 
     with tf.Graph().as_default():
 
@@ -262,6 +265,8 @@ def compress():
             image_index = [random.randint(0, 255) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
+                if train_images_val is None:
+                    get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i] + 1) , False)
                 image_batch[i] = train_images_val[image_index[i]]
                 labels_batch[i] = train_labels_val[image_index[i]]
             print(labels_batch)
