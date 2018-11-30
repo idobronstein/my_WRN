@@ -46,7 +46,7 @@ def get_last_batch_norm(graph, sess):
     return batch_param
 
 def cluster_kernel(kernel, cluster_num):
-    k_means =  KMeans(n_clusters==cluster_num, algorithm="full", random_state=0)
+    k_means =  KMeans(n_clusters=cluster_num, algorithm="full", random_state=0)
     h, w, i, o = kernel.shape
     kernel_shift = np.moveaxis(kernel, -1, 0)
     kernel_reshape = np.reshape(kernel_shift, [o, h*w*i])
