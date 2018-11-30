@@ -107,8 +107,8 @@ def get_image_file(image_path, is_np=True):
 
 def compress():
 
-    assert FLAGS.image_size == 8
-    assert FLAGS.batch_size == 256
+    assert FLAGS.image_size == 224
+    assert FLAGS.batch_size == 8
 
     with tf.Graph().as_default():
 
