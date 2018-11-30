@@ -184,7 +184,7 @@ def compress():
                     decay_step=decay_step,
                     lr_decay=FLAGS.lr_decay,
                     momentum=FLAGS.momentum)
-        new_network = resnet.ResNet(new_params, hp, images, labels, None)
+        new_network = resnet.ResNet(new_params, hp, images, labels, global_step)
         new_network.build_model()
         new_network.build_train_op()
         new_param_num = new_network.count_trainable_params()
