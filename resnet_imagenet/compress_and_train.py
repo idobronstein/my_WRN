@@ -170,9 +170,12 @@ def compress():
 
     # build new graph and eval
     with tf.Graph().as_default():
+        init_step = 0
+        global_step = tf.Variable(0, trainable=False, name='global_step')
 
         images = tf.placeholder(tf.float32, [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [FLAGS.batch_size])
+        
         decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
                     num_classes=FLAGS.num_classes,
@@ -181,7 +184,6 @@ def compress():
                     decay_step=decay_step,
                     lr_decay=FLAGS.lr_decay,
                     momentum=FLAGS.momentum)
-
         new_network = resnet.ResNet(new_params, hp, images, labels, None)
         new_network.build_model()
         new_network.build_train_op()
