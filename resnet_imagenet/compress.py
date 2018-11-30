@@ -64,8 +64,8 @@ def sum_bias(bias, cluster_indices, cluster_num):
         for i in range(len(cluster_indices)):
             if cluster_indices[i] == cluster:
                 cluster_sum += bias[i]
-        add_kernels[cluster] = cluster_sum
-    return sum_bias
+        new_bias[cluster] = cluster_sum
+    return new_bias
 
 def compress():
 
