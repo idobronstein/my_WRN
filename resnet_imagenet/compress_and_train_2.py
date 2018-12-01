@@ -20,7 +20,7 @@ import cv2
 import hickle as hkl
 import torch.utils.data
 import torchnet as tnt
-from torchvision import cvtransforms
+import cvtransforms
 import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
