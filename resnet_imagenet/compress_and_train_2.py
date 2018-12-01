@@ -137,7 +137,7 @@ def get_data_loder(type, suffle):
     train_loader = torch.utils.data.DataLoader(ds,
             batch_size=FLAGS.batch_size, shuffle=suffle,
             num_workers=16, pin_memory=False)
-    return valdir
+    return train_loader
 
 def get_next_test_batch(test_loader):
     for sample in test_loader:
