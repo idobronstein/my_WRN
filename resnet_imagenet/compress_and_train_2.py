@@ -121,7 +121,7 @@ def get_image_file(image_path, is_np=True):
 def cvload(path):
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return imgs
+    return img
 
 def get_data_loder(type, suffle):
     datadir = os.path.join(FLAGS.imagenetpath, )
