@@ -139,16 +139,9 @@ def get_data_loder(type, suffle):
             num_workers=16, pin_memory=False)
     return train_loader
 
-def get_next_test_batch(test_loader):
-    for sample in test_loader:
+def get_next_batch(loader):
+    for sample in loader:
         test_images_val, test_labels_vals = sample
-        test_images_val = sample[0].numpy()
-        test_images_val = np.moveaxis(test_images_val, 1, -1)
-        test_labels_val = sample[1].numpy()
-        yield test_images_val, test_labels_vals
-
-def get_next_train_batch(train_loader):
-    for sample in train_loader:
         test_images_val = sample[0].numpy()
         test_images_val = np.moveaxis(test_images_val, 1, -1)
         test_labels_val = sample[1].numpy()
@@ -222,8 +215,8 @@ def compress():
 
     # set up data loader
     print("| setting up data loader...")
-    train_loader = get_data_loder('train', True)
-    test_loader = get_data_loder('train', False)
+    train_loader = get_next_batch(get_data_loder('train', True))
+    test_loader = get_next_batch(get_data_loder('train', False))
 
     # build new graph and eval
     with tf.Graph().as_default():
@@ -285,7 +278,7 @@ def compress():
                 test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)] 
                 test_batches_index = [random.randint(0, 256 / FLAGS.batch_size - 1) for i in range(FLAGS.test_iter)]
                 for i in  range(FLAGS.test_iter):
-                    test_images_val, test_labels_val = get_next_test_batch(test_loader)
+                    test_images_val, test_labels_val = next(test_loader)
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                 feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
@@ -306,7 +299,7 @@ def compress():
 
             # Train
             start_time = time.time()
-            image_batch, labels_batch = get_next_train_batch(train_loader)
+            image_batch, labels_batch = next(train_loader)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:image_batch, labels:labels_batch})
