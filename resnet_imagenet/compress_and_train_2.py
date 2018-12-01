@@ -136,7 +136,7 @@ def get_data_loder(type, suffle):
             ]), loader = cvload)
     train_loader = torch.utils.data.DataLoader(ds,
             batch_size=FLAGS.batch_size, shuffle=suffle,
-            num_workers=16, pin_memory=False)
+            num_workers=8, pin_memory=False)
     return train_loader
 
 def get_next_batch(loader):
