@@ -123,8 +123,8 @@ def cvload(path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
-def get_data_loder(type, suffle):
-    datadir = os.path.join(FLAGS.imagenetpath, )
+def get_data_loder(data_set_type, suffle):
+    datadir = os.path.join(FLAGS.imagenetpath, data_set_type)
     ds = datasets.ImageFolder(datadir, tnt.transform.compose([
             cvtransforms.Scale(256),
             cvtransforms.CenterCrop(224),
