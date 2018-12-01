@@ -26,7 +26,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(0)(/group0.block)(\d)(.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(3)(/group3.block)(\d)(.conv1/kernel:0)')
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -277,7 +277,6 @@ def compress():
                 test_loss, test_acc = 0.0, 0.0
                 for i in  range(FLAGS.test_iter):
                     test_images_val, test_labels_val = next(test_loader)
-                    print(test_labels_val)
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                 feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
@@ -299,7 +298,6 @@ def compress():
             # Train
             start_time = time.time()
             image_batch, labels_batch = next(train_loader)
-            print(labels_batch)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:image_batch, labels:labels_batch})
