@@ -216,7 +216,7 @@ def compress():
     # set up data loader
     print("| setting up data loader...")
     train_loader = get_next_batch(get_data_loder('train', True))
-    test_loader = get_next_batch(get_data_loder('train', False))
+    test_loader = get_next_batch(get_data_loder('val', False))
 
     # build new graph and eval
     with tf.Graph().as_default():
@@ -275,10 +275,9 @@ def compress():
             # Test
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
-                test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)] 
-                test_batches_index = [random.randint(0, 256 / FLAGS.batch_size - 1) for i in range(FLAGS.test_iter)]
                 for i in  range(FLAGS.test_iter):
                     test_images_val, test_labels_val = next(test_loader)
+                    print(test_labels_val)
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                 feed_dict={images:test_images_val, labels:test_labels_val})
                     test_loss += loss_value
@@ -300,6 +299,7 @@ def compress():
             # Train
             start_time = time.time()
             image_batch, labels_batch = next(train_loader)
+            print(labels_batch)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:image_batch, labels:labels_batch})
