@@ -216,7 +216,7 @@ def compress():
     # set up data loader
     print("| setting up data loader...")
     train_loader = get_next_batch(get_data_loder('train', True))
-    test_loader = get_next_batch(get_data_loder('val', False))
+    test_loader = get_next_batch(get_data_loder('val', True))
 
     # build new graph and eval
     with tf.Graph().as_default():
@@ -276,7 +276,6 @@ def compress():
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
                 for i in  range(FLAGS.test_iter):
-                    import ipdb; ipdb.set_trace()
                     test_images_val, test_labels_val = next(test_loader)
                     print(test_labels_val)
                     loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
