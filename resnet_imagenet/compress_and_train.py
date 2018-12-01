@@ -231,7 +231,7 @@ def compress():
             # Test
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
-                test_batches = [random.randint(0, 194) for _ in range(FLAGS.test_iter)] 
+                test_batches = [random.randint(0, 185) for _ in range(FLAGS.test_iter)] 
                 test_batches_index = [random.randint(0, 256 / FLAGS.batch_size - 1) for i in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
                     print(i,j)
@@ -263,7 +263,7 @@ def compress():
             file_index = [random.randint(0, 1419) for _ in range(FLAGS.batch_size)]
             image_index = [random.randint(0, 255) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
-                train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train/image_{0}'.format(file_index[i]) , False)
+                train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train_2/image_{0}'.format(file_index[i]) , False)
                 image_batch[i] = train_images_val[image_index[i]]
                 labels_batch[i] = train_labels_val[image_index[i]]
             print(labels_batch)
