@@ -29,6 +29,7 @@ tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer"
 tf.app.flags.DEFINE_float('initial_lr', 0.001, """Initial learning rate""")
 tf.app.flags.DEFINE_float('lr_step_epoch', 3.0, """Epochs after which learing rate decays""")
 tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
+tf.app.flags.DEFINE_float('decay_step', 5000, """steps between decay""")
 tf.app.flags.DEFINE_integer('num_train_instance', 1000000, """Number of training images.""")
 tf.app.flags.DEFINE_integer('num_test_instance', 49920, """Number of test images.""")
 
@@ -181,12 +182,11 @@ def compress():
         images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
         labels = tf.placeholder(tf.int32, [None])
         
-        decay_step = FLAGS.lr_step_epoch * FLAGS.num_train_instance / FLAGS.batch_size
         hp = resnet.HParams(batch_size=FLAGS.batch_size,
                     num_classes=FLAGS.num_classes,
                     weight_decay=FLAGS.l2_weight,
                     initial_lr=FLAGS.initial_lr,
-                    decay_step=decay_step,
+                    decay_step=FLAGS.decay_step,
                     lr_decay=FLAGS.lr_decay,
                     momentum=FLAGS.momentum)
         new_network = resnet.ResNet(new_params, hp, images, labels, global_step)
@@ -231,10 +231,9 @@ def compress():
             # Test
             if step % FLAGS.test_interval == 0:
                 test_loss, test_acc = 0.0, 0.0
-                test_batches = [random.randint(0, 185) for _ in range(FLAGS.test_iter)] 
+                test_batches = [random.randint(0, 195) for _ in range(FLAGS.test_iter)] 
                 test_batches_index = [random.randint(0, 256 / FLAGS.batch_size - 1) for i in range(FLAGS.test_iter)]
                 for i, j in zip(test_batches, test_batches_index):
-                    print(i,j)
                     test_images_val, test_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images/image_{0}'.format(i))
                     test_images_val = test_images_val[j : j + FLAGS.batch_size]
                     test_labels_val = test_labels_val[j : j + FLAGS.batch_size]
@@ -260,13 +259,12 @@ def compress():
             start_time = time.time()
             image_batch = np.zeros([FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3])
             labels_batch = np.zeros(FLAGS.batch_size)
-            file_index = [random.randint(0, 1419) for _ in range(FLAGS.batch_size)]
+            file_index = [random.randint(0, 4744) for _ in range(FLAGS.batch_size)]
             image_index = [random.randint(0, 255) for _ in range(FLAGS.test_iter)]
             for i in range(FLAGS.batch_size):
                 train_images_val, train_labels_val = get_image_file('/specific/netapp5_2/gamir/idobronstein/checkouts/my_WRN/resnet_imagenet/images_train_2/image_{0}'.format(file_index[i]) , False)
                 image_batch[i] = train_images_val[image_index[i]]
                 labels_batch[i] = train_labels_val[image_index[i]]
-            print(labels_batch)
             _, lr_value, loss_value, acc_value, train_summary_str = \
                     sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                         feed_dict={images:image_batch, labels:labels_batch})
