@@ -26,7 +26,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(0)(/group0.block)(\d)(.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(3)(/group3.block)(\d)(.conv1/kernel:0)')
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -145,7 +145,7 @@ def get_next_batch(loader):
         test_images_val = sample[0].numpy()
         test_images_val = np.moveaxis(test_images_val, 1, -1)
         test_labels_val = sample[1].numpy()
-        yield test_images_val, test_labels_vals
+        yield test_images_val, test_labels_val
 
 def compress():
 
