@@ -142,7 +142,9 @@ def get_data_loder(type, suffle):
 def get_next_test_batch(test_loader):
     for sample in test_loader:
         test_images_val, test_labels_vals = sample
+        test_images_val = sample[0].numpy()
         test_images_val = np.moveaxis(test_images_val, 1, -1)
+        test_labels_val = sample[1].numpy()
         yield test_images_val, test_labels_vals
 
 def get_next_train_batch(train_loader):
