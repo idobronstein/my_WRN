@@ -11,6 +11,7 @@ import torch
 import tensorflow as tf
 import numpy as np
 from sklearn.cluster import KMeans
+from time import sleep
 
 import dataset
 import image_processing
@@ -322,7 +323,14 @@ def compress():
                 saver.save(sess, checkpoint_path, global_step=step)
 
 def main(argv=None):  # pylint: disable=unused-argument
-  compress()
+    while True:
+        try:
+            compress()
+        except:
+            print('Got exception. Sleep for a minitus and come back to the game')
+            sys.stdout.flush()
+            sleep(60)
+
 
 
 if __name__ == '__main__':

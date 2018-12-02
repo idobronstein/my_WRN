@@ -34,12 +34,41 @@ tf.app.flags.DEFINE_string('train_dir', './train', """Directory where to write l
 tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('display', 100, """Number of iterations to display training info.""")
 tf.app.flags.DEFINE_integer('test_interval', 1000, """Number of iterations to run a test""")
-tf.app.flags.DEFINE_integer('test_iter', 195, """Number of iterations during a test""")
+tf.app.flags.DEFINE_integer('test_iter', 10000, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 FLAGS = tf.app.flags.FLAGS
+
+def cvload(path):
+    img = cv2.imread(path, cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
+
+def get_data_loder(data_set_type, suffle):
+    datadir = os.path.join(FLAGS.imagenetpath, data_set_type)
+    ds = datasets.ImageFolder(datadir, tnt.transform.compose([
+            cvtransforms.Scale(256),
+            cvtransforms.CenterCrop(224),
+            lambda x: x.astype(np.float32) / 255.0,
+            cvtransforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                   std=[0.229, 0.224, 0.225]),
+            lambda x: x.transpose(2,0,1).astype(np.float32),
+            torch.from_numpy,
+            ]), loader = cvload)
+    train_loader = torch.utils.data.DataLoader(ds,
+            batch_size=FLAGS.batch_size, shuffle=suffle,
+            num_workers=8, pin_memory=False)
+    return train_loader
+
+def get_next_batch(loader):
+    for sample in loader:
+        test_images_val, test_labels_vals = sample
+        test_images_val = sample[0].numpy()
+        test_images_val = np.moveaxis(test_images_val, 1, -1)
+        test_labels_val = sample[1].numpy()
+        yield test_images_val, test_labels_val
 
 def train():
     print('[Dataset Configuration]')
