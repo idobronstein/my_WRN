@@ -67,5 +67,5 @@ if __name__ == '__main__':
 
     builder = tf.saved_model.builder.SavedModelBuilder('./build')
     graph = freeze_graph(args.model_dir, args.output_node_names)
-    builder.ave()
+    builder.save()
 
