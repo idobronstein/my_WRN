@@ -27,7 +27,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-UPDATE_PARAM_REGEX = re.compile('(group)(3)(/group3.block)(\d)(.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(2)(/group2.block)(\d)(.conv1/kernel:0)')
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
