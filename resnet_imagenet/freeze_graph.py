@@ -65,4 +65,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_node_names", type=str, default="", help="The name of the output nodes, comma separated.")
     args = parser.parse_args()
 
-    freeze_graph(args.model_dir, args.output_node_names)
+    builder = tf.saved_model.builder.SavedModelBuilder('./build')
+    graph = freeze_graph(args.model_dir, args.output_node_names)
+    builder.ave()
+
