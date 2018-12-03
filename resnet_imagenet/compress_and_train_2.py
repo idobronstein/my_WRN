@@ -310,7 +310,12 @@ def compress():
                 saver.save(sess, checkpoint_path, global_step=step)
 
 def main(argv=None):  # pylint: disable=unused-argument
-    compress()
+    while True:
+        try:
+            compress()
+        except:
+            print('Error!')
+            sleep(600)
 
 if __name__ == '__main__':
   tf.app.run()
