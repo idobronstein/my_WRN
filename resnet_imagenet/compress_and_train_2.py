@@ -26,8 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-
-UPDATE_PARAM_REGEX = re.compile('(group)(2)(/group2.block)(\d)(.conv1/kernel:0)')
+UPDATE_PARAM_REGEX = re.compile('(group)(3)(/group3.block)(\d)(.conv1/kernel:0)')
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -108,16 +107,13 @@ def sum_kernel(kernel, cluster_indices, cluster_num):
     return add_kernels
 
 def get_image_file(image_path, is_np=True):
-    try:
-        with open(image_path, 'rb') as f:
-                test_images_val, test_labels_val = pickle.load(f)
-        if not is_np:
-            test_images_val = test_images_val.numpy()
-            test_labels_val = test_labels_val.numpy()
-        test_images_val = np.moveaxis(test_images_val, 1, -1)
-        return test_images_val, test_labels_val
-    except:
-        import ipdb; ipdb.set_trace()
+    with open(image_path, 'rb') as f:
+            test_images_val, test_labels_val = pickle.load(f)
+    if not is_np:
+        test_images_val = test_images_val.numpy()
+        test_labels_val = test_labels_val.numpy()
+    test_images_val = np.moveaxis(test_images_val, 1, -1)
+    return test_images_val, test_labels_val
 
 def cvload(path):
     img = cv2.imread(path, cv2.IMREAD_COLOR)
@@ -267,7 +263,7 @@ def compress():
         if not os.path.exists(FLAGS.train_dir):
             os.mkdir(FLAGS.train_dir)
         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-
+        import ipdb; ipdb.set_trace()
         # Training!
         test_best_acc = 0.0
         image_train_file = 0
@@ -324,12 +320,7 @@ def compress():
 
 def main(argv=None):  # pylint: disable=unused-argument
     while True:
-        try:
-            compress()
-        except:
-            print('Got exception. Sleep for a minitus and come back to the game')
-            sys.stdout.flush()
-            sleep(60)
+        compress()
 
 
 
