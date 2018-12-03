@@ -64,15 +64,6 @@ tf.app.flags.DEFINE_float('compression_rate', 0.5, """New Network width multipli
 
 FLAGS = tf.app.flags.FLAGS
 
-def get_last_batch_norm(graph, sess):
-    name_last = 'unit_last/bn/{param}:0'
-    batch_param = []
-    for param in BATCH_NORM_PARAN_NAMES:
-        param_tensor = graph.get_tensor_by_name(name_last.format(param=param))
-        param_vector = sess.run(param_tensor)
-        batch_param.append(param_vector)
-    return batch_param
-
 def cluster_kernel(kernel, cluster_num):
     k_means =  KMeans(n_clusters=cluster_num, algorithm="full", random_state=0)
     h, w, i, o = kernel.shape
@@ -263,7 +254,7 @@ def compress():
         if not os.path.exists(FLAGS.train_dir):
             os.mkdir(FLAGS.train_dir)
         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-        import ipdb; ipdb.set_trace()
+
         # Training!
         test_best_acc = 0.0
         image_train_file = 0
@@ -319,10 +310,7 @@ def compress():
                 saver.save(sess, checkpoint_path, global_step=step)
 
 def main(argv=None):  # pylint: disable=unused-argument
-    while True:
-        compress()
-
-
+    compress()
 
 if __name__ == '__main__':
   tf.app.run()
