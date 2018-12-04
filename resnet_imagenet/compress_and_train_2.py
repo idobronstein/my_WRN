@@ -140,7 +140,6 @@ def compress():
     assert FLAGS.image_size == 224
 
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
-    flag_first_round = True
     max_steps = FLAGS.max_steps
     for i in range(3):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(i))
@@ -175,7 +174,7 @@ def compress():
             graph = tf.get_default_graph()
             flag1 = False
             flag2 = False
-            new_params = params
+            new_params = {}
             for var in tf.trainable_variables():
                 var_vec = sess.run(var)
                 match = compress_layer.match(var.name)
@@ -198,9 +197,9 @@ def compress():
                     flag2 = False
 
             for k, v in params.items():
-                if k not in new_params:
-                    new_params[k] = (v, flag_first_round)
-            
+                    if k not in new_params:
+                        if len(k) == 1:
+                            new_params[k] = (v, True)
             #close old graph
             sess.close()
         tf.reset_default_graph()
@@ -316,7 +315,6 @@ def compress():
             sess.close()
         tf.reset_default_graph()
         params = new_params
-        flag_first_round = False
         max_steps += FLAGS.max_steps
         
         
