@@ -158,7 +158,7 @@ def compress():
                                 decay_step=None,
                                 lr_decay=None,
                                 momentum=None)
-            
+            import ipdb; ipdb.set_trace()
             network = resnet.ResNet(params, hp, images, labels, None)
             network.build_model()
             old_param_num = network.count_trainable_params()
