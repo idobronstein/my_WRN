@@ -139,6 +139,11 @@ def compress():
 
     assert FLAGS.image_size == 224
 
+    # set up data loader
+    print("| setting up data loader...")
+    train_loader = get_next_batch(get_data_loder('train', True))
+    test_loader = get_next_batch(get_data_loder('val', True))
+
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
     for i in range(3):
@@ -160,7 +165,8 @@ def compress():
             
             network = resnet.ResNet(params, hp, images, labels, None)
             network.build_model()
-            old_param_num = network.count_trainable_params()
+            if i == 0:
+                sold_param_num = network.count_trainable_params()
     
             # Build an initialization operation to run below.
             init = tf.initialize_all_variables()
@@ -205,12 +211,6 @@ def compress():
             #close old graph
             sess.close()
         tf.reset_default_graph()
-    
-    
-        # set up data loader
-        print("| setting up data loader...")
-        train_loader = get_next_batch(get_data_loder('train', True))
-        test_loader = get_next_batch(get_data_loder('val', True))
     
         # build new graph and eval
         with tf.Graph().as_default():
