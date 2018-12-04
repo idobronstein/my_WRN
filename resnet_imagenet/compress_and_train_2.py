@@ -200,6 +200,8 @@ def compress():
                     if k not in new_params:
                         if len(k) == 1:
                             new_params[k] = (v, True)
+                        else:
+                            new_params[k] = v
             #close old graph
             sess.close()
         tf.reset_default_graph()
