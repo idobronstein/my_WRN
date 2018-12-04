@@ -142,7 +142,7 @@ def compress():
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     flag_first_round = True
     max_steps = FLAGS.max_steps
-    for i in range(3):
+    for i in range(1, 3):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(i))
         with tf.Graph().as_default():
     
@@ -313,9 +313,13 @@ def compress():
                 if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
+            sess.close()
+        tf.reset_default_graph()
         params = new_params
         flag_first_round = False
         max_steps += FLAGS.max_steps
+        
+        
 
 def main(argv=None):  # pylint: disable=unused-argument
         compress()
