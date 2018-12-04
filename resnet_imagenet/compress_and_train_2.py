@@ -142,7 +142,7 @@ def compress():
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     flag_first_round = True
     max_steps = FLAGS.max_steps
-    for i in range(1, 3):
+    for i in range(3):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(i))
         with tf.Graph().as_default():
     
