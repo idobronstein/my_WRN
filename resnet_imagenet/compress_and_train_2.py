@@ -204,7 +204,7 @@ def compress():
 
             for k, v in params.items():
                     if k not in new_params:
-                        if len(k) == 1:
+                        if len(v) == 1:
                             new_params[k] = (v, True)
                         else:
                             new_params[k] = v
