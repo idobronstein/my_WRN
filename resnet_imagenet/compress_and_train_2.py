@@ -319,8 +319,8 @@ def compress():
             sess.close()
         tf.reset_default_graph()
         params = new_params
+        init_step = max_steps - 1
         max_steps += FLAGS.max_steps
-        
         
 
 def main(argv=None):  # pylint: disable=unused-argument
