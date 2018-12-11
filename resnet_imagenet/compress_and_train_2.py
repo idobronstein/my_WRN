@@ -166,7 +166,7 @@ def compress():
             network = resnet.ResNet(params, hp, images, labels, None)
             network.build_model()
             if i == 0:
-                sold_param_num = network.count_trainable_params()
+                old_param_num = network.count_trainable_params()
     
             # Build an initialization operation to run below.
             init = tf.initialize_all_variables()
