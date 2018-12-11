@@ -26,7 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-UPDATE_PARAM_REGEX = '(group)(3)(/group3.block)({0})(.conv1/kernel:0)'
+UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -146,6 +146,7 @@ def compress():
 
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
+    first_restore = True
     for layer_num in range(3):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(layer_num))
         with tf.Graph().as_default():
@@ -249,10 +250,10 @@ def compress():
             if ckpt and ckpt.model_checkpoint_path:
                print('\tRestore from %s' % ckpt.model_checkpoint_path)
                # Restores from checkpoint
-               init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-               if not init_step % FLAGS.max_steps == FLAGS.max_steps - 1:
-                    print(init_step, FLAGS.max_steps)
+               if first_restore:
+                    first_restore = False
                     saver.restore(sess, ckpt.model_checkpoint_path)
+                    init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
             else:
                print('No checkpoint file found. Start from the scratch.')
             sys.stdout.flush()
