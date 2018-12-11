@@ -250,6 +250,7 @@ def compress():
                print('\tRestore from %s' % ckpt.model_checkpoint_path)
                # Restores from checkpoint
                init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+               import ipdb; ipdb.set_trace()
                if not init_step % FLAGS.max_steps == 0:
                     saver.restore(sess, ckpt.model_checkpoint_path)
             else:
