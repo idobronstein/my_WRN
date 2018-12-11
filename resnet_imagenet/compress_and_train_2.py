@@ -26,7 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
+UPDATE_PARAM_REGEX = '(group)(3)(/group3.block)({0})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -317,7 +317,7 @@ def compress():
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
             sess.close()
-        tf.reset_default_graph()
+        tf.reset_default_graph()        
         params = new_params
         init_step = max_steps - 1
         max_steps += FLAGS.max_steps
