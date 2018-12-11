@@ -249,8 +249,9 @@ def compress():
             if ckpt and ckpt.model_checkpoint_path:
                print('\tRestore from %s' % ckpt.model_checkpoint_path)
                # Restores from checkpoint
-               saver.restore(sess, ckpt.model_checkpoint_path)
                init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+               if not init_step % FLAGS.max_steps == 0:
+                    saver.restore(sess, ckpt.model_checkpoint_path)
             else:
                print('No checkpoint file found. Start from the scratch.')
             sys.stdout.flush()
