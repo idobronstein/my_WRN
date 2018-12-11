@@ -146,8 +146,8 @@ def compress():
 
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
-    for i in range(3):
-        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(i))
+    for layer_num in range(3):
+        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(layer_num))
         with tf.Graph().as_default():
     
             # Build a Graph that computes the predictions from the inference model.
@@ -165,7 +165,7 @@ def compress():
             
             network = resnet.ResNet(params, hp, images, labels, None)
             network.build_model()
-            if i == 0:
+            if layer_num == 0:
                 old_param_num = network.count_trainable_params()
     
             # Build an initialization operation to run below.
@@ -267,7 +267,7 @@ def compress():
             test_best_acc = 0.0
             image_train_file = 0
             index_train_file = 0
-            for step in range(init_step, FLAGS.max_steps):
+            for step in range(init_step, max_steps):
                 # Test
                 if step % FLAGS.test_interval == 0:
                     test_loss, test_acc = 0.0, 0.0
