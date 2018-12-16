@@ -162,7 +162,7 @@ class MultiResNet():
         #average graidents blah blah blah
         return self.average_gradients(tower_grads), cross_entropy_mean, top1acc
 
-    def train_ops(self):
+    def build_train_op(self):
         grads, self.loss, self.preds = self.multigpu_grads()
         self.train_op = self.optimizer.apply_gradients(grads)
         return [train_op, cross_entropy_mean, top1acc]
