@@ -56,7 +56,7 @@ tf.app.flags.DEFINE_integer('test_interval', 500, """Number of iterations to run
 tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
-tf.app.flags.DEFINE_float('num_gpus', 4, """Number of gpu to use""")
+tf.app.flags.DEFINE_integer('num_gpus', 4, """Number of gpu to use""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 
