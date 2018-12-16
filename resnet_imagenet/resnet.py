@@ -96,25 +96,77 @@ class ResNet():
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=o, labels=self._labels)
         self.loss = tf.reduce_mean(loss, name='cross_entropy')
         tf.summary.scalar('cross_entropy', self.loss)
-    
-    def build_train_op(self):
-        # Add l2 loss
-        with tf.variable_scope('l2_loss'):
-            costs = [tf.nn.l2_loss(var) for var in tf.trainable_variables()]
-            l2_loss = tf.multiply(self._hp.weight_decay, tf.add_n(costs))
-        self._total_loss = self.loss + l2_loss
+
+
+    def count_trainable_params(self):
+        total_parameters = 0
+        for variable in tf.trainable_variables():
+            shape = variable.get_shape()
+            variable_parametes = 1
+            for dim in shape:
+                variable_parametes *= dim.value
+            total_parameters += variable_parametes
+        print("Total training params: {0}".format(total_parameters)) 
+        return total_parameters
+
+
+class MultiResNet():
+
+    def __init__(self, params, hp, images, labels, num_gpus, global_step):
+        self._params = params
+        self._hp = hp 
+        self._images = images 
+        self._labels = labels
+        self._global_step = global_step
+        self._num_gpus = num_gpus
         
-        # Learning rate
         self.lr = tf.train.exponential_decay(self._hp.initial_lr, self._global_step,
-                                        self._hp.decay_step, self._hp.lr_decay, staircase=True)
+                                    self._hp.decay_step, self._hp.lr_decay, staircase=True)
         tf.summary.scalar('learing_rate', self.lr)
-        
         # Gradient descent step
-        opt = tf.train.GradientDescentOptimizer(self.lr)
-        grads_and_vars = opt.compute_gradients(self._total_loss, tf.trainable_variables())
-        apply_grad_op = opt.apply_gradients(grads_and_vars, global_step=self._global_step)
-        self.train_op = apply_grad_op
+        self.optimizer = tf.train.GradientDescentOptimizer(self.lr)
+    
+    def get_grads(self, device):
+        with tf.device(device):
+            model = ResNet(self._params, self._hp, self._images, self._labels, self._global_step)
+                    
+            # Add l2 loss
+            with tf.variable_scope('l2_loss'):
+                costs = [tf.nn.l2_loss(var) for var in tf.trainable_variables()]
+                l2_loss = tf.multiply(self._hp.weight_decay, tf.add_n(costs))
+            self._total_loss = model.loss + l2_loss
+            
+            grads = self.optimizer.compute_gradients(self._total_loss)
         
+        return grads, model.loss, model.preds
+
+    def multigpu_grads(self):
+        # Calculate the gradients for each model tower.
+        tower_grads = []
+        with tf.variable_scope(tf.get_variable_scope()):
+          for i in range(self._num_gpus):
+              with tf.name_scope('Tower_%d' % i) as scope:
+                # Calculate the loss for one tower. This function
+                # constructs the entire model but shares the variables across
+                # all towers.
+                grads, cross_entropy_mean, top1acc = self.get_grads('/gpu:%d' % i)
+        
+                # Reuse variables for the next tower.
+                tf.get_variable_scope().reuse_variables()
+        
+                # Retain the summaries from the final tower.
+                summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
+        
+                # Keep track of the gradients across all towers.
+                tower_grads.append(grads)
+        #average graidents blah blah blah
+        return self.average_gradients(tower_grads), cross_entropy_mean, top1acc
+
+    def train_ops(self):
+        grads, self.loss, self.preds = self.multigpu_grads()
+        self.train_op = self.optimizer.apply_gradients(grads)
+        return [train_op, cross_entropy_mean, top1acc]
+
     def count_trainable_params(self):
         total_parameters = 0
         for variable in tf.trainable_variables():

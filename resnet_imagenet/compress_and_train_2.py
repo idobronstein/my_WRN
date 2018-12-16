@@ -56,6 +56,7 @@ tf.app.flags.DEFINE_integer('test_interval', 500, """Number of iterations to run
 tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
+tf.app.flags.DEFINE_float('num_gpus', 4, """Number of gpu to use""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 
@@ -227,8 +228,7 @@ def compress():
                         decay_step=FLAGS.decay_step,
                         lr_decay=FLAGS.lr_decay,
                         momentum=FLAGS.momentum)
-            new_network = resnet.ResNet(new_params, hp, images, labels, global_step)
-            new_network.build_model()
+            new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step)
             new_network.build_train_op()
             new_param_num = new_network.count_trainable_params()
             print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
