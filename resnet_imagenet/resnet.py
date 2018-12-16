@@ -129,11 +129,11 @@ class MultiResNet():
     def get_grads(self, device):
         with tf.device(device):
             model = ResNet(self._params, self._hp, self._images, self._labels, self._global_step)
-                    
+            model.build_model()
+
             # Add l2 loss
             with tf.variable_scope('l2_loss'):
                 costs = [tf.nn.l2_loss(var) for var in tf.trainable_variables()]
-                import ipdb; ipdb.set_trace()
                 l2_loss = tf.multiply(self._hp.weight_decay, tf.add_n(costs))
             self._total_loss = model.loss + l2_loss
             
