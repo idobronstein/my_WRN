@@ -176,7 +176,7 @@ def compress():
             # Start running operations on the Graph.
             sess = tf.Session(config=tf.ConfigProto(
                 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
-                log_device_placement=FLAGS.log_device_placement))
+                log_device_placement=FLAGS.log_device_placement), allow_soft_placement=True)
             sess.run(init)
             
             graph = tf.get_default_graph()
