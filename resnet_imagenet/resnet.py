@@ -191,7 +191,6 @@ class MultiResNet():
     def build_train_op(self):
         grads, self.loss, self.preds = self.multigpu_grads()
         self.train_op = self.optimizer.apply_gradients(grads)
-        return [train_op, cross_entropy_mean, top1acc]
 
     def count_trainable_params(self):
         total_parameters = 0
