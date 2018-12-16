@@ -133,6 +133,7 @@ class MultiResNet():
             # Add l2 loss
             with tf.variable_scope('l2_loss'):
                 costs = [tf.nn.l2_loss(var) for var in tf.trainable_variables()]
+                import ipdb; ipdb.set_trace()
                 l2_loss = tf.multiply(self._hp.weight_decay, tf.add_n(costs))
             self._total_loss = model.loss + l2_loss
             
