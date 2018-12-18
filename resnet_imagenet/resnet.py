@@ -12,12 +12,14 @@ HParams = namedtuple('HParams',
 class ResNet():
     '''Bottleneck WRN-50-2 model definition
     '''
-    def __init__(self, params, hp, images, labels, global_step):
+    def __init__(self, params, hp, images, labels, global_step ,is_training, use_batch_norm):
         self._params = {k: self.tr(v) for k, v in params.items()}
         self._hp = hp 
         self._images = images 
         self._labels = labels
         self._global_step = global_step
+        self._is_training = is_training
+        self._use_batch_norm = use_batch_norm
 
     def tr(self, v):
         if len(v) == 2:
@@ -43,9 +45,9 @@ class ResNet():
             z = tf.nn.conv2d(x, kernal, [1,stride,stride,1], padding='VALID')
             if '%s.bias'%name in self._params:
                 bias = self.init_variable(self._params['%s.bias'%name], 'bias')
-                return tf.nn.bias_add(z, bias)
-            else:
-                return z
+                z = tf.nn.bias_add(z, bias)
+            if self.use_batch_norm:
+                z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None)
 
     def group(self, input, base, stride, n):
         with tf.variable_scope(base) as scope:

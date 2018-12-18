@@ -155,6 +155,7 @@ def compress():
             # Build a Graph that computes the predictions from the inference model.
             images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
             labels = tf.placeholder(tf.int32, [None])
+            is_training = tf.placeholder(tf.bool, shape=[])
     
             # Build model
             hp = resnet.HParams(batch_size=FLAGS.batch_size,
@@ -165,7 +166,7 @@ def compress():
                                 lr_decay=None,
                                 momentum=None)
             
-            network = resnet.ResNet(params, hp, images, labels, None)
+            network = resnet.ResNet(params, hp, images, labels, None, is_training, False)
             network.build_model()
             if layer_num == 0:
                 old_param_num = network.count_trainable_params()
@@ -220,6 +221,7 @@ def compress():
     
             images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
             labels = tf.placeholder(tf.int32, [None])
+            is_training = tf.placeholder(tf.bool, shape=[])
             
             hp = resnet.HParams(batch_size=FLAGS.batch_size,
                         num_classes=FLAGS.num_classes,
@@ -228,7 +230,7 @@ def compress():
                         decay_step=FLAGS.decay_step,
                         lr_decay=FLAGS.lr_decay,
                         momentum=FLAGS.momentum)
-            new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step)
+            new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step, is_training, True)
             new_network.build_train_op()
             new_param_num = new_network.count_trainable_params()
             print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
@@ -274,7 +276,7 @@ def compress():
                     for i in  range(FLAGS.test_iter):
                         test_images_val, test_labels_val = next(test_loader)
                         loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                    feed_dict={images:test_images_val, labels:test_labels_val})
+                                    feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
                         test_loss += loss_value
                         test_acc += acc_value
                     test_loss /= FLAGS.test_iter
@@ -296,7 +298,7 @@ def compress():
                 image_batch, labels_batch = next(train_loader)
                 _, lr_value, loss_value, acc_value, train_summary_str = \
                         sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
-                            feed_dict={images:image_batch, labels:labels_batch})
+                            feed_dict={images:image_batch, labels:labels_batch, is_training:True})
                 duration = time.time() - start_time
                 assert not np.isnan(loss_value)
     
