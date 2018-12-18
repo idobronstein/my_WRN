@@ -46,7 +46,7 @@ class ResNet():
             if '%s.bias'%name in self._params:
                 bias = self.init_variable(self._params['%s.bias'%name], 'bias')
                 z = tf.nn.bias_add(z, bias)
-            if self.use_batch_norm:
+            if self._use_batch_norm:
                 z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None)
 
     def group(self, input, base, stride, n):
