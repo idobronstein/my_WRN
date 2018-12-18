@@ -151,7 +151,7 @@ def compress():
     init_step = 0
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(layer_num))
-        if layer_num != 3
+        if layer_num != 3:
             batch_norm = False
             initial_lr = FLAGS.initial_lr
             with tf.Graph().as_default():
