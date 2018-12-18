@@ -48,6 +48,7 @@ class ResNet():
                 z = tf.nn.bias_add(z, bias)
             if self._use_batch_norm:
                 z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None)
+            return z
 
     def group(self, input, base, stride, n):
         with tf.variable_scope(base) as scope:
