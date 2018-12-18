@@ -115,13 +115,15 @@ class ResNet():
 
 class MultiResNet():
 
-    def __init__(self, params, hp, images, labels, num_gpus, global_step):
+    def __init__(self, params, hp, images, labels, num_gpus, global_step, is_training, use_batch_norm):
         self._params = params
         self._hp = hp 
         self._images = images 
         self._labels = labels
         self._global_step = global_step
         self._num_gpus = num_gpus
+        self._is_training = is_training
+        self._use_batch_norm = use_batch_norm
         
         self.lr = tf.train.exponential_decay(self._hp.initial_lr, self._global_step,
                                     self._hp.decay_step, self._hp.lr_decay, staircase=True)
@@ -156,7 +158,7 @@ class MultiResNet():
 
     def get_grads(self, device):
         with tf.device(device):
-            model = ResNet(self._params, self._hp, self._images, self._labels, self._global_step)
+            model = ResNet(self._params, self._hp, self._images, self._labels, self._global_step, self._is_training, self._use_batch_norm)
             model.build_model()
 
             # Add l2 loss
