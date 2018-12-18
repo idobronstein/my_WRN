@@ -219,7 +219,7 @@ def compress():
                 sess.close()
             tf.reset_default_graph()
         else:
-            batch_norm = False
+            batch_norm = True
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
