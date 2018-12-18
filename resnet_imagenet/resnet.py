@@ -164,7 +164,7 @@ class MultiResNet():
             
             grads = self.optimizer.compute_gradients(self._total_loss)
         
-        return grads, model.loss, model.preds
+        return grads, model.loss, model.acc
 
     def multigpu_grads(self):
         # Calculate the gradients for each model tower.
@@ -189,7 +189,7 @@ class MultiResNet():
         return self.average_gradients(tower_grads), cross_entropy_mean, top1acc
 
     def build_train_op(self):
-        grads, self.loss, self.preds = self.multigpu_grads()
+        grads, self.loss, self.acc = self.multigpu_grads()
         self.train_op = self.optimizer.apply_gradients(grads)
 
     def count_trainable_params(self):
