@@ -327,7 +327,7 @@ def compress():
                         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                         saver.save(sess, checkpoint_path, global_step=step)
                 sess.close()
-        tf.reset_default_graph()        
+            tf.reset_default_graph()        
         params = new_params
         init_step = max_steps - 1
         max_steps += FLAGS.max_steps
