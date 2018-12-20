@@ -193,6 +193,7 @@ def compress():
                     match = compress_layer.match(var.name)
                     if match:
                         print("compress: ", var.name)
+                        sys.stdout.flush()
                         group_num = int(match.groups()[1])
                         block_num = int(match.groups()[3])
                         cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
@@ -223,110 +224,109 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
-        # build new graph and eval
-        with tf.Graph().as_default():
-            global_step = tf.Variable(0, trainable=False, name='global_step')
-    
-            images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
-            labels = tf.placeholder(tf.int32, [None])
-            is_training = tf.placeholder(tf.bool, shape=[])
-            
-            hp = resnet.HParams(batch_size=FLAGS.batch_size,
-                        num_classes=FLAGS.num_classes,
-                        weight_decay=FLAGS.l2_weight,
-                        initial_lr=initial_lr,
-                        decay_step=FLAGS.decay_step,
-                        lr_decay=FLAGS.lr_decay,
-                        momentum=FLAGS.momentum)
-            new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step, is_training, batch_norm)
-            new_network.build_train_op()
-            new_param_num = new_network.count_trainable_params()
-            print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
-    
-            # Summaries(training)
-            train_summary_op = tf.summary.merge_all()
-    
-            init = tf.initialize_all_variables()
-            # Start running operations on the Graph.
-            sess = tf.Session(config=tf.ConfigProto(
-                gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
-                log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
-            sess.run(init)
-    
-            # Create a saver.
-            saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
-            '''
-            ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-            if ckpt and ckpt.model_checkpoint_path:
-                print('\tRestore from %s' % ckpt.model_checkpoint_path)
-                # Restores from checkpoint
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-            else:
-               print('No checkpoint file found. Start from the scratch.')
-            '''
-            sys.stdout.flush()
-    
-            # Start queue runners & summary_writer
-            tf.train.start_queue_runners(sess=sess)
-            if not os.path.exists(FLAGS.train_dir):
-                os.mkdir(FLAGS.train_dir)
-            summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-    
-            # Training!
-            test_best_acc = 0.0
-            image_train_file = 0
-            index_train_file = 0
-            for step in range(init_step, max_steps):
-                # Test
-                if step % FLAGS.test_interval == 0:
-                    test_loss, test_acc = 0.0, 0.0
-                    for i in  range(FLAGS.test_iter):
-                        test_images_val, test_labels_val = next(test_loader)
-                        loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                    feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
-                        test_loss += loss_value
-                        test_acc += acc_value
-                    test_loss /= FLAGS.test_iter
-                    test_acc /= FLAGS.test_iter
-                    test_best_acc = max(test_best_acc, test_acc)
-                    format_str = ('%s: (Test)     step %d, loss=%.4f, acc=%.4f')
-                    print(format_str % (datetime.now(), step, test_loss, test_acc))
-                    sys.stdout.flush()
-    
-                    test_summary = tf.Summary()
-                    test_summary.value.add(tag='test/loss', simple_value=test_loss)
-                    test_summary.value.add(tag='test/acc', simple_value=test_acc)
-                    test_summary.value.add(tag='test/best_acc', simple_value=test_best_acc)
-                    summary_writer.add_summary(test_summary, step)
-                    summary_writer.flush()
-    
-                # Train
-                start_time = time.time()
-                image_batch, labels_batch = next(train_loader)
-                _, lr_value, loss_value, acc_value, train_summary_str = \
-                        sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
-                            feed_dict={images:image_batch, labels:labels_batch, is_training:True})
-                duration = time.time() - start_time
-                assert not np.isnan(loss_value)
-    
-                # Display & Summary(training)
-                if step % FLAGS.display == 0:
-                    num_examples_per_step = FLAGS.batch_size
-                    examples_per_sec = num_examples_per_step / duration
-                    sec_per_batch = float(duration)
-                    format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
-                                  'sec/batch)')
-                    print(format_str % (datetime.now(), step, loss_value, acc_value, lr_value,
-                                         examples_per_sec, sec_per_batch))
-                    sys.stdout.flush()
-                    summary_writer.add_summary(train_summary_str, step)
-    
-                # Save the model checkpoint periodically.
-                if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
-                    checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=step)
-            sess.close()
+            # build new graph and eval
+            with tf.Graph().as_default():
+                global_step = tf.Variable(0, trainable=False, name='global_step')
+        
+                images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+                labels = tf.placeholder(tf.int32, [None])
+                is_training = tf.placeholder(tf.bool, shape=[])
+                
+                hp = resnet.HParams(batch_size=FLAGS.batch_size,
+                            num_classes=FLAGS.num_classes,
+                            weight_decay=FLAGS.l2_weight,
+                            initial_lr=initial_lr,
+                            decay_step=FLAGS.decay_step,
+                            lr_decay=FLAGS.lr_decay,
+                            momentum=FLAGS.momentum)
+                new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step, is_training, batch_norm)
+                new_network.build_train_op()
+                new_param_num = new_network.count_trainable_params()
+                print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
+        
+                # Summaries(training)
+                train_summary_op = tf.summary.merge_all()
+        
+                init = tf.initialize_all_variables()
+                # Start running operations on the Graph.
+                sess = tf.Session(config=tf.ConfigProto(
+                    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
+                    log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
+                sess.run(init)
+        
+                # Create a saver.
+                saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
+                
+                ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
+                if ckpt and ckpt.model_checkpoint_path:
+                    print('\tRestore from %s' % ckpt.model_checkpoint_path)
+                    # Restores from checkpoint
+                    saver.restore(sess, ckpt.model_checkpoint_path)
+                    init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+                else:
+                   print('No checkpoint file found. Start from the scratch.')
+                sys.stdout.flush()
+        
+                # Start queue runners & summary_writer
+                tf.train.start_queue_runners(sess=sess)
+                if not os.path.exists(FLAGS.train_dir):
+                    os.mkdir(FLAGS.train_dir)
+                summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+        
+                # Training!
+                test_best_acc = 0.0
+                image_train_file = 0
+                index_train_file = 0
+                for step in range(init_step, max_steps):
+                    # Test
+                    if step % FLAGS.test_interval == 0:
+                        test_loss, test_acc = 0.0, 0.0
+                        for i in  range(FLAGS.test_iter):
+                            test_images_val, test_labels_val = next(test_loader)
+                            loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
+                                        feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
+                            test_loss += loss_value
+                            test_acc += acc_value
+                        test_loss /= FLAGS.test_iter
+                        test_acc /= FLAGS.test_iter
+                        test_best_acc = max(test_best_acc, test_acc)
+                        format_str = ('%s: (Test)     step %d, loss=%.4f, acc=%.4f')
+                        print(format_str % (datetime.now(), step, test_loss, test_acc))
+                        sys.stdout.flush()
+        
+                        test_summary = tf.Summary()
+                        test_summary.value.add(tag='test/loss', simple_value=test_loss)
+                        test_summary.value.add(tag='test/acc', simple_value=test_acc)
+                        test_summary.value.add(tag='test/best_acc', simple_value=test_best_acc)
+                        summary_writer.add_summary(test_summary, step)
+                        summary_writer.flush()
+        
+                    # Train
+                    start_time = time.time()
+                    image_batch, labels_batch = next(train_loader)
+                    _, lr_value, loss_value, acc_value, train_summary_str = \
+                            sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
+                                feed_dict={images:image_batch, labels:labels_batch, is_training:True})
+                    duration = time.time() - start_time
+                    assert not np.isnan(loss_value)
+        
+                    # Display & Summary(training)
+                    if step % FLAGS.display == 0:
+                        num_examples_per_step = FLAGS.batch_size
+                        examples_per_sec = num_examples_per_step / duration
+                        sec_per_batch = float(duration)
+                        format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
+                                      'sec/batch)')
+                        print(format_str % (datetime.now(), step, loss_value, acc_value, lr_value,
+                                             examples_per_sec, sec_per_batch))
+                        sys.stdout.flush()
+                        summary_writer.add_summary(train_summary_str, step)
+        
+                    # Save the model checkpoint periodically.
+                    if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
+                        checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                        saver.save(sess, checkpoint_path, global_step=step)
+                sess.close()
         tf.reset_default_graph()        
         params = new_params
         init_step = max_steps - 1
