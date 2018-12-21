@@ -118,10 +118,8 @@ class MultiResNet():
     def __init__(self, params, hp, images, labels, num_gpus, global_step, is_training, use_batch_norm):
         self._params = params
         self._hp = hp 
-        images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
-        labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
-        self._images = images_splits 
-        self._labels = labels_splits
+        self._images = images 
+        self._labels = labels
         self._global_step = global_step
         self._num_gpus = num_gpus
         self._is_training = is_training

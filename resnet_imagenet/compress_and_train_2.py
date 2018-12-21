@@ -160,6 +160,8 @@ def compress():
                 # Build a Graph that computes the predictions from the inference model.
                 images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
                 labels = tf.placeholder(tf.int32, [None])
+                images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
+                labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
                 is_training = tf.placeholder(tf.bool, shape=[])
         
                 # Build model
@@ -171,7 +173,7 @@ def compress():
                                     lr_decay=None,
                                     momentum=None)
                 
-                network = resnet.ResNet(params, hp, images, labels, None, is_training, False)
+                network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
                 network.build_model()
                 if layer_num == 0:
                     old_param_num = network.count_trainable_params()
@@ -231,6 +233,8 @@ def compress():
     
             images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
             labels = tf.placeholder(tf.int32, [None])
+            images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
+            labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
             is_training = tf.placeholder(tf.bool, shape=[])
             
             hp = resnet.HParams(batch_size=FLAGS.batch_size,
@@ -240,7 +244,7 @@ def compress():
                         decay_step=FLAGS.decay_step,
                         lr_decay=FLAGS.lr_decay,
                         momentum=FLAGS.momentum)
-            new_network = resnet.MultiResNet(new_params, hp, images, labels, FLAGS.num_gpus, global_step, is_training, batch_norm)
+            new_network = resnet.MultiResNet(new_params, hp, images_splits, labels_splits, FLAGS.num_gpus, global_step, is_training, batch_norm)
             new_network.build_train_op()
             new_param_num = new_network.count_trainable_params()
             print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
