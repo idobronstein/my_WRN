@@ -340,8 +340,8 @@ def compress():
                             feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
                 test_loss += loss_value
                 test_acc += acc_value
-            test_loss /= FLAGS.test_iter
-            test_acc /= FLAGS.test_iter
+            test_loss /= FLAGS.final_test_iter
+            test_acc /= FLAGS.final_test_iter
             test_best_acc = max(test_best_acc, test_acc)
             format_str = ('%s: (Final Test)     step %d, loss=%.4f, acc=%.4f')
             print(format_str % (datetime.now(), step, test_loss, test_acc))
