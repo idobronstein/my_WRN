@@ -12,14 +12,13 @@ HParams = namedtuple('HParams',
 class ResNet():
     '''Bottleneck WRN-50-2 model definition
     '''
-    def __init__(self, params, hp, images, labels, global_step ,is_training, use_batch_norm):
+    def __init__(self, params, hp, images, labels, global_step ,is_training):
         self._params = {k: self.tr(v) for k, v in params.items()}
         self._hp = hp 
         self._images = images 
         self._labels = labels
         self._global_step = global_step
         self._is_training = is_training
-        self._use_batch_norm = use_batch_norm
 
     def tr(self, v):
         if len(v) == 2:
@@ -113,7 +112,7 @@ class ResNet():
 
 class MultiResNet():
 
-    def __init__(self, params, hp, images, labels, num_gpus, global_step, is_training, use_batch_norm):
+    def __init__(self, params, hp, images, labels, num_gpus, global_step, is_training):
         self._params = params
         self._hp = hp 
         self._images = images 
@@ -121,7 +120,6 @@ class MultiResNet():
         self._global_step = global_step
         self._num_gpus = num_gpus
         self._is_training = is_training
-        self._use_batch_norm = use_batch_norm
         
         self.lr = tf.train.exponential_decay(self._hp.initial_lr, self._global_step,
                                     self._hp.decay_step, self._hp.lr_decay, staircase=True)
@@ -157,7 +155,7 @@ class MultiResNet():
     def get_grads(self, device_num):
         device = '/gpu:%d' % device_num
         with tf.device(device):
-            model = ResNet(self._params, self._hp, self._images[device_num], self._labels[device_num], self._global_step, self._is_training, self._use_batch_norm)
+            model = ResNet(self._params, self._hp, self._images[device_num], self._labels[device_num], self._global_step, self._is_training)
             model.build_model()
 
             # Add l2 loss
