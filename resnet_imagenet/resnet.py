@@ -34,7 +34,7 @@ class ResNet():
 
     def init_variable(self, param, name):
         #variable = tf.constant(param)
-        variable = tf.get_variable(name, initializer=np.float32(param))
+        variable = tf.get_variable(name, initializer=tf.constant_initializer(np.float32(param)))
         return variable
     
     def conv2d(self, x,  name, stride=1, padding=0):
