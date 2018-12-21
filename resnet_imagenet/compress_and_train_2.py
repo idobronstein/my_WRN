@@ -160,8 +160,8 @@ def compress():
                 # Build a Graph that computes the predictions from the inference model.
                 images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
                 labels = tf.placeholder(tf.int32, [None])
-                images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
-                labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
+                images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
+                labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
                 is_training = tf.placeholder(tf.bool, shape=[])
         
                 # Build model
@@ -233,8 +233,8 @@ def compress():
     
             images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
             labels = tf.placeholder(tf.int32, [None])
-            images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
-            labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
+            images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
+            labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
             is_training = tf.placeholder(tf.bool, shape=[])
             
             hp = resnet.HParams(batch_size=FLAGS.batch_size,
