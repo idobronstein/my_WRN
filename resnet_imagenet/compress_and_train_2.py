@@ -58,6 +58,7 @@ tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a t
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_integer('num_gpus', 4, """Number of gpu to use""")
+tf.app.flags.DEFINE_integer('num_workers', 8, """Number of workers to get data""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log device placement.""")
 
 
@@ -126,7 +127,7 @@ def get_data_loder(data_set_type, suffle):
             ]), loader = cvload)
     train_loader = torch.utils.data.DataLoader(ds,
             batch_size=FLAGS.batch_size, shuffle=suffle,
-            num_workers=6, pin_memory=False)
+            num_workers=FLAGS.num_workers, pin_memory=False)
     return train_loader
 
 def get_next_batch(loader):
