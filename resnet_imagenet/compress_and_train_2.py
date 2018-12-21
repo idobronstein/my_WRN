@@ -165,7 +165,7 @@ def compress():
                 is_training = tf.placeholder(tf.bool, shape=[])
         
                 # Build model
-                hp = resnet.HParams(batch_size=FLAGS.batch_size / FLAGS.num_gpus,
+                hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
                                     num_classes=FLAGS.num_classes,
                                     weight_decay=None,
                                     initial_lr=None,
@@ -237,7 +237,7 @@ def compress():
             labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
             is_training = tf.placeholder(tf.bool, shape=[])
             
-            hp = resnet.HParams(batch_size=FLAGS.batch_size / FLAGS.num_gpus,
+            hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
                         num_classes=FLAGS.num_classes,
                         weight_decay=FLAGS.l2_weight,
                         initial_lr=initial_lr,
