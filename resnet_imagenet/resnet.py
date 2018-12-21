@@ -34,11 +34,7 @@ class ResNet():
 
     def init_variable(self, param, name, fully_define=True):
         #variable = tf.constant(param)
-        if fully_define:
-            initializer = tf.constant_initializer(np.float32(param))
-        else:
-            initializer = np.float32(param)
-        variable = tf.get_variable(name, shape=list(param.shape), initializer=initializer)
+        variable = tf.get_variable(name, initializer=np.float32(param))
         return variable
     
     def conv2d(self, x,  name, stride=1, padding=0):
@@ -46,9 +42,9 @@ class ResNet():
             x = tf.pad(x, [[0,0],[padding,padding],[padding,padding],[0,0]])
             kernal = self.init_variable(self._params['%s.weight'%name], 'kernel')
             z = tf.nn.conv2d(x, kernal, [1,stride,stride,1], padding='VALID')
-            bias = self.init_variable(self._params['%s.bias'%name], 'bias', True)
+            bias = self.init_variable(self._params['%s.bias'%name], 'bias')
             param_initializers = {'beta': bias}
-            z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
+            z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None)
             return z
 
     def group(self, input, base, stride, n):
