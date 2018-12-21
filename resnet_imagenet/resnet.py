@@ -32,9 +32,13 @@ class ResNet():
             return v.transpose()
         return v
 
-    def init_variable(self, param, name):
+    def init_variable(self, param, name, fully_define=False):
         #variable = tf.constant(param)
-        variable = tf.get_variable(name, initializer=tf.constant_initializer(np.float32(param)))
+        if fully_define:
+            initializer = tf.constant_initializer(np.float32(param))
+        else:
+            initializer = np.float32(param)
+        variable = tf.get_variable(name, initializer=initializer)
         return variable
     
     def conv2d(self, x,  name, stride=1, padding=0):
