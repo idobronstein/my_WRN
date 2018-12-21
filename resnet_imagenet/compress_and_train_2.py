@@ -26,7 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
+UPDATE_PARAM_REGEX = '(group)(3)(/group3.block)({0})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -55,6 +55,7 @@ tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run."""
 tf.app.flags.DEFINE_integer('display', 100, """Number of iterations to display training info.""")
 tf.app.flags.DEFINE_integer('test_interval', 500, """Number of iterations to run a test""")
 tf.app.flags.DEFINE_integer('test_iter', 100, """Number of iterations during a test""")
+tf.app.flags.DEFINE_integer('final_test_iter', 4000, """Number of iterations during a test""")
 tf.app.flags.DEFINE_integer('checkpoint_interval', 10000, """Number of iterations to save parameters as a checkpoint""")
 tf.app.flags.DEFINE_float('gpu_fraction', 0.95, """The fraction of GPU memory to be allocated""")
 tf.app.flags.DEFINE_integer('num_gpus', 4, """Number of gpu to use""")
@@ -332,6 +333,19 @@ def compress():
                 if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
+            test_loss, test_acc = 0.0, 0.0
+            for i in  range(FLAGS.final_test_iter):
+                test_images_val, test_labels_val = next(test_loader)
+                loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
+                            feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
+                test_loss += loss_value
+                test_acc += acc_value
+            test_loss /= FLAGS.test_iter
+            test_acc /= FLAGS.test_iter
+            test_best_acc = max(test_best_acc, test_acc)
+            format_str = ('%s: (Final Test)     step %d, loss=%.4f, acc=%.4f')
+            print(format_str % (datetime.now(), step, test_loss, test_acc))
+            sys.stdout.flush()
             sess.close()
         tf.reset_default_graph()        
         params = new_params
