@@ -32,7 +32,7 @@ class ResNet():
             return v.transpose()
         return v
 
-    def init_variable(self, param, name, fully_define=False):
+    def init_variable(self, param, name, fully_define=True):
         #variable = tf.constant(param)
         if fully_define:
             initializer = tf.constant_initializer(np.float32(param))
