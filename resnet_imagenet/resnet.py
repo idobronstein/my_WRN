@@ -46,7 +46,7 @@ class ResNet():
             x = tf.pad(x, [[0,0],[padding,padding],[padding,padding],[0,0]])
             kernal = self.init_variable(self._params['%s.weight'%name], 'kernel')
             z = tf.nn.conv2d(x, kernal, [1,stride,stride,1], padding='VALID')
-            bias = self.init_variable(self._params['%s.bias'%name], 'bias')
+            bias = self.init_variable(self._params['%s.bias'%name], 'bias', True)
             param_initializers = {'beta': bias}
             z = tf.contrib.layers.batch_norm(z, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
             return z
