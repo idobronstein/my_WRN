@@ -118,8 +118,10 @@ class MultiResNet():
     def __init__(self, params, hp, images, labels, num_gpus, global_step, is_training, use_batch_norm):
         self._params = params
         self._hp = hp 
-        self._images = images 
-        self._labels = labels
+        images_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=images)
+        labels_splits = tf.split(axis=0, num_or_size_splits=num_gpus, value=labels)
+        self._images = images_splits 
+        self._labels = labels_splits
         self._global_step = global_step
         self._num_gpus = num_gpus
         self._is_training = is_training
@@ -156,9 +158,10 @@ class MultiResNet():
               average_grads.append(grad_and_var)
           return average_grads
 
-    def get_grads(self, device):
+    def get_grads(self, device_num):
+        device = '/gpu:%d' % device_num
         with tf.device(device):
-            model = ResNet(self._params, self._hp, self._images, self._labels, self._global_step, self._is_training, self._use_batch_norm)
+            model = ResNet(self._params, self._hp, self._images[device_num], self._labels[device_num], self._global_step, self._is_training, self._use_batch_norm)
             model.build_model()
 
             # Add l2 loss
@@ -180,7 +183,7 @@ class MultiResNet():
                 # Calculate the loss for one tower. This function
                 # constructs the entire model but shares the variables across
                 # all towers.
-                grads, cross_entropy_mean, top1acc = self.get_grads('/gpu:%d' % i)
+                grads, cross_entropy_mean, top1acc = self.get_grads(i)
         
                 # Reuse variables for the next tower.
                 tf.get_variable_scope().reuse_variables()
