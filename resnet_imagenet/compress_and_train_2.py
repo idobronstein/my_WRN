@@ -215,7 +215,7 @@ def compress():
                     new_gamma = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_GAMMA_NAME.format(group_num=group_num, block_num=block_num)] = (new_gamma ,False)
                     flag2 = False
-                    flag4 = True
+                    flag3 = True
                 elif flag3:
                     new_moving_mean = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_MOVING_MEAN_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_mean ,False)
@@ -227,7 +227,6 @@ def compress():
                     flag4 = False
                     flag5 = True
                 elif flag5:
-                    import ipdb; ipdb.set_trace()
                     new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
                     new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
                     flag5 = False
