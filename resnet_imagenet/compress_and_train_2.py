@@ -227,6 +227,7 @@ def compress():
                     flag4 = False
                     flag5 = True
                 elif flag5:
+                    import ipdb; ipdb.set_trace()
                     new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
                     new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
                     flag5 = False
