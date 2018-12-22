@@ -207,6 +207,7 @@ def compress():
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
                     flag1 = True
                 elif flag1:
+                    import ipdb; ipdb.set_trace()
                     new_beta = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_BETA_NAME.format(group_num=group_num, block_num=block_num)] = (new_beta ,False)
                     flag2 = False
