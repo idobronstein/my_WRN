@@ -40,15 +40,15 @@ class ResNet():
     def batch_norm(self, x, name):
         param_initializers = {}
         if '%s.bias'%name in self._params:
-            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._param['%s.bias'%name]))}
+            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.bias'%name]))}
         elif '%s.beta'%name in self._params:
-            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._param['%s.beta'%name]))}
+            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name]))}
         if '%s.gamma'%name in self._params:
-            param_initializers = {'gamma': tf.convert_to_tensor(np.float32(self._param['%s.gamma'%name]))}
+            param_initializers = {'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name]))}
         if '%s.moving_mean'%name in self._params:
-            param_initializers = {'moving_mean': tf.convert_to_tensor(np.float32(self._param['%s.moving_mean'%name]))}
+            param_initializers = {'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name]))}
         if '%s.moving_variance'%name in self._params:
-            param_initializers = {'moving_variance': tf.convert_to_tensor(np.float32(self._param['%s.moving_variance'%name]))}
+            param_initializers = {'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
         return z
 
