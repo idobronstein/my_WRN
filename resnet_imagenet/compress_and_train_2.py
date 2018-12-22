@@ -39,7 +39,6 @@ BATCHNORM_MOVING_VARIANCE_NAME = 'group{group_num}.block{block_num}.conv1.moving
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
 tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
 tf.app.flags.DEFINE_float('initial_lr', 0.001, """Initial learning rate""")
-tf.app.flags.DEFINE_float('initial_lr_batchnorm', 0.001, """Initial learning rate fpr last retrain""")
 tf.app.flags.DEFINE_float('lr_step_epoch', 3.0, """Epochs after which learing rate decays""")
 tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
 tf.app.flags.DEFINE_float('decay_step', 5000, """steps between decay""")
@@ -253,7 +252,7 @@ def compress():
             hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
                         num_classes=FLAGS.num_classes,
                         weight_decay=FLAGS.l2_weight,
-                        initial_lr=initial_lr,
+                        initial_lr=FLAGS.initial_lr,
                         decay_step=FLAGS.decay_step,
                         lr_decay=FLAGS.lr_decay,
                         momentum=FLAGS.momentum)
