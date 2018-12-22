@@ -102,7 +102,7 @@ def sum_batch_norm(param, cluster_indices, cluster_num):
         for i in range(len(cluster_indices)):
             if cluster_indices[i] == cluster:
                 cluster_size += 1
-                cluster_sum += batch_norm[param_index][i]
+                cluster_sum += param[i]
         clusters_param[cluster] = cluster_sum / cluster_size
     return clusters_param
 
