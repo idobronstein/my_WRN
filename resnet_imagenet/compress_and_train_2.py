@@ -127,7 +127,7 @@ def get_data_loder(data_set_type, suffle):
             torch.from_numpy,
             ]), loader = cvload)
     train_loader = torch.utils.data.DataLoader(ds,
-            batch_size=FLAGS.batch_size, shuffle=suffle,
+            batch_size=FLAGS.batch_size, shuffle=suffle, drop_last=True,
             num_workers=FLAGS.num_workers, pin_memory=False)
     return train_loader
 
@@ -151,6 +151,7 @@ def compress():
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
     init_step = 0
+    restore_flag = True
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(layer_num))
         with tf.Graph().as_default():
@@ -255,16 +256,16 @@ def compress():
     
             # Create a saver.
             saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
-            '''
-            ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-            if ckpt and ckpt.model_checkpoint_path:
-                print('\tRestore from %s' % ckpt.model_checkpoint_path)
-                # Restores from checkpoint
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-            else:
-               print('No checkpoint file found. Start from the scratch.')
-            '''
+            if restore_flag:
+                ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
+                if ckpt and ckpt.model_checkpoint_path:
+                    print('\tRestore from %s' % ckpt.model_checkpoint_path)
+                    # Restores from checkpoint
+                    saver.restore(sess, ckpt.model_checkpoint_path)
+                    init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+                else:
+                   print('No checkpoint file found. Start from the scratch.')
+                restore_flag = False
             sys.stdout.flush()
     
             # Start queue runners & summary_writer
