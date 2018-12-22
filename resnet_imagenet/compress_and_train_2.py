@@ -192,7 +192,7 @@ def compress():
             sess.run(init)
             
             graph = tf.get_default_graph()
-            flag1, flag2, flag3, flag4, flag5 = False, False, False, False, False
+            flag1, flag2, flag3, flag4, flag5, flag6 = False, False, False, False, False, False
             new_params = {}
             for var in tf.global_variables():
                 var_vec = sess.run(var)
