@@ -26,7 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-UPDATE_PARAM_REGEX = '(group)(3)(/group3.block)({0})(.conv1/kernel:0)'
+UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 BATCHNORM_BETA_NAME = 'group{group_num}.block{block_num}.conv1.beta'
@@ -194,7 +194,6 @@ def compress():
             graph = tf.get_default_graph()
             flag1, flag2, flag3, flag4, flag5 = False, False, False, False, False
             new_params = {}
-            import ipdb; ipdb.set_trace()
             for var in tf.global_variables():
                 var_vec = sess.run(var)
                 match = compress_layer.match(var.name)
@@ -275,6 +274,7 @@ def compress():
     
             # Create a saver.
             saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
+            '''
             if restore_flag:
                 ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
                 if ckpt and ckpt.model_checkpoint_path:
@@ -285,6 +285,7 @@ def compress():
                 else:
                    print('No checkpoint file found. Start from the scratch.')
                 restore_flag = False
+            '''
             sys.stdout.flush()
     
             # Start queue runners & summary_writer
