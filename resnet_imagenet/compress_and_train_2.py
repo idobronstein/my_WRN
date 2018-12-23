@@ -355,7 +355,11 @@ def compress():
         
 
 def main(argv=None):  # pylint: disable=unused-argument
-        compress()
+        try:
+            compress()
+        except Exception as e:
+            print(e)
+            sys.stdout.flush()
 
 if __name__ == '__main__':
   tf.app.run()
