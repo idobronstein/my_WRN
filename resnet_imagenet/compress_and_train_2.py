@@ -286,7 +286,7 @@ def compress():
             image_train_file = 0
             index_train_file = 0
             for step in range(init_step, max_steps):
-                if step == 20000:
+                if step == 20010:
                     import ipdb; ipdb.set_trace()
                 # Test
                 if step % FLAGS.test_interval == 0:
