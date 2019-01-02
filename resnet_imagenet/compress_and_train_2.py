@@ -299,7 +299,7 @@ def compress():
                 if step % FLAGS.test_interval == 0:
                     test_loss, test_acc = 0.0, 0.0
                     for i in  range(FLAGS.test_iter):
-                        test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'test', True)
+                        test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
                         if new_test_loader is not None:
                             test_loader = new_test_loader
                         loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
@@ -349,7 +349,7 @@ def compress():
                     saver.save(sess, checkpoint_path, global_step=step)
             test_loss, test_acc = 0.0, 0.0
             for i in  range(FLAGS.final_test_iter):
-                test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'test', True)
+                test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
                 if new_test_loader is not None:
                     test_loader = new_test_loader
                 loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
