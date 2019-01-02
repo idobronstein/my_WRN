@@ -143,7 +143,6 @@ def get_next_batch(enum, data_set_type, suffle):
     batch = next(enum, None)
     new_enum = None
     if batch is None:
-        import ipdb; ipdb.set_trace()
         new_enum = get_enumerate(get_data_loder(data_set_type, suffle))
         batch = next(new_enum, None)
     return batch[0], batch[1], new_enum
