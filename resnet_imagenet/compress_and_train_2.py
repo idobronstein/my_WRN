@@ -130,12 +130,13 @@ def get_data_loder(data_set_type, suffle):
             lambda x: x.transpose(2,0,1).astype(np.float32),
             torch.from_numpy,
             ]), loader = cvload)
+    print('{0} has {1} images'.format(datadir, len(ds)))
     train_loader = torch.utils.data.DataLoader(ds,
             batch_size=FLAGS.batch_size, shuffle=suffle, drop_last=True,
             num_workers=FLAGS.num_workers, pin_memory=False)
     return train_loader
 
-def get_next_batch(loader):
+def get_enumerate(loader):
     for sample in loader:
         test_images_val, test_labels_vals = sample
         test_images_val = sample[0].numpy()
@@ -143,14 +144,23 @@ def get_next_batch(loader):
         test_labels_val = sample[1].numpy()
         yield test_images_val, test_labels_val
 
+def get_next_batch(enum, data_set_type, suffle):
+    batch = next(enum, None)
+    new_enum = None
+    if batch is None:
+        del enum
+        new_enum = get_enumerate(get_data_loder(data_set_type, suffle))
+        batch = next(new_enum, None)
+    return batch[0], batch[1], new_enum
+
 def compress():
 
     assert FLAGS.image_size == 224
 
     # set up data loader
     print("| setting up data loader...")
-    train_loader = get_next_batch(get_data_loder('train', True))
-    test_loader = get_next_batch(get_data_loder('val', True))
+    train_loader = get_enumerate(get_data_loder('train', True))
+    test_loader = get_enumerate(get_data_loder('val', True))
 
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
@@ -302,7 +312,9 @@ def compress():
                 if step % FLAGS.test_interval == 0:
                     test_loss, test_acc = 0.0, 0.0
                     for i in  range(FLAGS.test_iter):
-                        test_images_val, test_labels_val = next(test_loader)
+                        test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
+                        if new_test_loader is not None:
+                            test_loader = new_test_loader
                         loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                                     feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
                         test_loss += loss_value
@@ -323,7 +335,9 @@ def compress():
     
                 # Train
                 start_time = time.time()
-                image_batch, labels_batch = next(train_loader)
+                image_batch, labels_batch, new_train_loader = get_next_batch(train_loader, 'train', True)
+                if new_train_loader is not None:
+                    train_loader = new_train_loader
                 _, lr_value, loss_value, acc_value, train_summary_str = \
                         sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
                             feed_dict={images:image_batch, labels:labels_batch, is_training:True})
@@ -348,7 +362,9 @@ def compress():
                     saver.save(sess, checkpoint_path, global_step=step)
             test_loss, test_acc = 0.0, 0.0
             for i in  range(FLAGS.final_test_iter):
-                test_images_val, test_labels_val = next(test_loader)
+                test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
+                if new_test_loader is not None:
+                    test_loader = new_test_loader
                 loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
                             feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
                 test_loss += loss_value
@@ -367,7 +383,11 @@ def compress():
         
 
 def main(argv=None):  # pylint: disable=unused-argument
-        compress()
+        try:
+            compress()
+        except Exception as e:
+            print(e)
+            sys.stdout.flush()
 
 if __name__ == '__main__':
   tf.app.run()
