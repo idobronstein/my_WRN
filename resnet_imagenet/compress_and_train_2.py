@@ -29,6 +29,7 @@ from torch.autograd import Variable
 UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
+CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 BATCHNORM_BETA_NAME = 'group{group_num}.block{block_num}.conv1.beta'
 BATCHNORM_GAMMA_NAME = 'group{group_num}.block{block_num}.conv1.gamma'
 BATCHNORM_MOVING_MEAN_NAME = 'group{group_num}.block{block_num}.conv1.moving_mean'
@@ -104,6 +105,16 @@ def sum_batch_norm(param, cluster_indices, cluster_num):
                 cluster_sum += param[i]
         clusters_param[cluster] = cluster_sum / cluster_size
     return clusters_param
+
+def sum_bias(bias, cluster_indices, cluster_num):
+    new_bias = np.zeros([cluster_num])
+    for cluster in range(cluster_num):
+        cluster_sum = 0
+        for i in range(len(cluster_indices)):
+            if cluster_indices[i] == cluster:
+                cluster_sum += bias[i]
+        new_bias[cluster] = cluster_sum
+    return new_bias
 
 def get_image_file(image_path, is_np=True):
     with open(image_path, 'rb') as f:
@@ -201,7 +212,7 @@ def compress():
             sess.run(init)
             
             graph = tf.get_default_graph()
-            flag1, flag2, flag3, flag4, flag5 = False, False, False, False, False
+            flag1, flag2, flag3, flag4, flag5, flag6 = False, False, False, False, False, False
             new_params = {}
             for var in tf.global_variables():
                 var_vec = sess.run(var)
@@ -216,29 +227,34 @@ def compress():
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
                     flag1 = True
                 elif flag1:
-                    new_beta = sum_batch_norm(var_vec, cluster_indices, cluster_num)
-                    new_params[BATCHNORM_BETA_NAME.format(group_num=group_num, block_num=block_num)] = (new_beta ,False)
+                    new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
+                    new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
                     flag1 = False
                     flag2 = True
                 elif flag2:
-                    new_gamma = sum_batch_norm(var_vec, cluster_indices, cluster_num)
-                    new_params[BATCHNORM_GAMMA_NAME.format(group_num=group_num, block_num=block_num)] = (new_gamma ,False)
+                    new_beta = sum_batch_norm(var_vec, cluster_indices, cluster_num)
+                    new_params[BATCHNORM_BETA_NAME.format(group_num=group_num, block_num=block_num)] = (new_beta ,False)
                     flag2 = False
                     flag3 = True
                 elif flag3:
-                    new_moving_mean = sum_batch_norm(var_vec, cluster_indices, cluster_num)
-                    new_params[BATCHNORM_MOVING_MEAN_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_mean ,False)
+                    new_gamma = sum_batch_norm(var_vec, cluster_indices, cluster_num)
+                    new_params[BATCHNORM_GAMMA_NAME.format(group_num=group_num, block_num=block_num)] = (new_gamma ,False)
                     flag3 = False
                     flag4 = True
                 elif flag4:
-                    new_moving_variance = sum_batch_norm(var_vec, cluster_indices, cluster_num)
-                    new_params[BATCHNORM_MOVING_VARIANCE_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_variance ,False)
+                    new_moving_mean = sum_batch_norm(var_vec, cluster_indices, cluster_num)
+                    new_params[BATCHNORM_MOVING_MEAN_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_mean ,False)
                     flag4 = False
                     flag5 = True
                 elif flag5:
+                    new_moving_variance = sum_batch_norm(var_vec, cluster_indices, cluster_num)
+                    new_params[BATCHNORM_MOVING_VARIANCE_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_variance ,False)
+                    flag5 = False
+                    flag6 = True
+                elif flag6:
                     new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
                     new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
-                    flag5 = False
+                    flag6 = False
 
             for k, v in params.items():
                     if k not in new_params:

@@ -39,16 +39,17 @@ class ResNet():
     
     def batch_norm(self, x, name):
         param_initializers = {}
-        if '%s.bias'%name in self._params:
-            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.bias'%name]))}
-        elif '%s.beta'%name in self._params:
-            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name]))}
-        if '%s.gamma'%name in self._params:
-            param_initializers = {'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name]))}
-        if '%s.moving_mean'%name in self._params:
-            param_initializers = {'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name]))}
-        if '%s.moving_variance'%name in self._params:
-            param_initializers = {'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
+        batch_norm_size = x.shape[-1]
+        if '%s.beta'%name in self._params:
+            param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name])),
+                                  'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
+                                  'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
+                                  'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
+        else:
+            param_initializers = {'beta': tf.zeros(batch_norm_size),
+                                  'gamma': tf.ones(batch_norm_size),
+                                  'moving_mean': tf.zeros(batch_norm_size),
+                                  'moving_variance': tf.ones(batch_norm_size)}
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
         return z
 
@@ -57,6 +58,9 @@ class ResNet():
             x = tf.pad(x, [[0,0],[padding,padding],[padding,padding],[0,0]])
             kernal = self.init_variable(self._params['%s.weight'%name], 'kernel')
             z = tf.nn.conv2d(x, kernal, [1,stride,stride,1], padding='VALID')
+            if '%s.bias'%name in self._params:
+                bias = self.init_variable(self._params['%s.bias'%name], 'bias')
+                z = tf.nn.bias_add(z, bias)
             z = self.batch_norm(z, name)
             return z
 
