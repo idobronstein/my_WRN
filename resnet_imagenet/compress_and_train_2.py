@@ -126,7 +126,7 @@ def get_data_loder(data_set_type, suffle):
             lambda x: x.transpose(2,0,1).astype(np.float32),
             torch.from_numpy,
             ]), loader = cvload)
-    import ipdb; ipdb.set_trace()
+    print('{0} has {1} images'.format(datadir, len(ds)))
     train_loader = torch.utils.data.DataLoader(ds,
             batch_size=FLAGS.batch_size, shuffle=suffle, drop_last=True,
             num_workers=FLAGS.num_workers, pin_memory=False)
