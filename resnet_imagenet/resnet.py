@@ -89,6 +89,7 @@ class ResNet():
         o = tf.pad(o, [[0,0], [1,1], [1,1], [0,0]])
         o = tf.nn.max_pool(o, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID')
         o_g0 = self.group(o, 'group0', 1, self.blocks[0])
+        import ipdb; ipdb. set_trace()
         o_g1 = self.group(o_g0, 'group1', 2, self.blocks[1])
         o_g2 = self.group(o_g1, 'group2', 2, self.blocks[2])
         o_g3 = self.group(o_g2, 'group3', 2, self.blocks[3])
