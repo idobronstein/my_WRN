@@ -139,7 +139,7 @@ class MultiResNet():
                                     self._hp.decay_step, self._hp.lr_decay, staircase=True)
         tf.summary.scalar('learing_rate', self.lr)
         # Gradient descent step
-        self.optimizer = tf.train.GradientDescentOptimizer(self.lr)
+        self.optimizer = tf.train.MomentumOptimizer(self.lr, self._hp.momentum)
     
     def average_gradients(self, tower_grads):
           average_grads = []
