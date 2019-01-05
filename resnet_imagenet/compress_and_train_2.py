@@ -26,7 +26,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-UPDATE_PARAM_REGEX = '(group)(3)(/group3.block)({0})(.conv1/kernel:0)'
+UPDATE_PARAM_REGEX = '(group)({0})(/group{0}.block)({1})(.conv1/kernel:0)'
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
@@ -65,6 +65,8 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log dev
 
 # cluster params
 tf.app.flags.DEFINE_float('compression_rate', 0.5, """New Network width multiplier""")
+tf.app.flags.DEFINE_integer('block_to_compress', 3, """The block to compress""")
+
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -163,7 +165,7 @@ def compress():
     init_step = 0
     restore_flag = True
     for layer_num in range(4):
-        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(layer_num))
+        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         if layer_num != 3:
             batch_norm = False
             initial_lr = FLAGS.initial_lr
