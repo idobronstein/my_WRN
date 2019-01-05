@@ -164,6 +164,7 @@ def compress():
     max_steps = FLAGS.max_steps
     init_step = 0
     restore_flag = True
+    just_compress = True
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         if layer_num != 3:
@@ -241,6 +242,10 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
+        if just_compress:
+            just_compress = False
+            break
+            
         # build new graph and eval
         with tf.Graph().as_default():
             global_step = tf.Variable(0, trainable=False, name='global_step')
