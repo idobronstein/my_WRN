@@ -225,6 +225,7 @@ def compress():
                     cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                     cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
+                    import ipdb; ipdb.set_trace()
                     flag1 = True
                 elif flag1:
                     new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
