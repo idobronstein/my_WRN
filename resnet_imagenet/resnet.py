@@ -47,7 +47,7 @@ class ResNet():
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
-        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers, outputs_collections=BATCH_COLLECTION)
+        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
         return z
 
     def conv2d(self, x,  name, stride=1, padding=0):
@@ -180,9 +180,9 @@ class MultiResNet():
             
             grads = self.optimizer.compute_gradients(self._total_loss)
         
-            batch_collection = tf.get_collection(BATCH_COLLECTION)
-            import pdb; pdb.set_trace()
-        return grads, model.loss, model.acc
+            batch_norm_op = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+        return grads, model.loss, model.acc, batch_norm_op
 
     def multigpu_grads(self):
         # Calculate the gradients for each model tower.
@@ -193,7 +193,7 @@ class MultiResNet():
                 # Calculate the loss for one tower. This function
                 # constructs the entire model but shares the variables across
                 # all towers.
-                grads, cross_entropy_mean, top1acc = self.get_grads(i)
+                grads, cross_entropy_mean, top1acc, batch_norm_op = self.get_grads(i)
         
                 # Reuse variables for the next tower.
                 tf.get_variable_scope().reuse_variables()
@@ -204,11 +204,11 @@ class MultiResNet():
                 # Keep track of the gradients across all towers.
                 tower_grads.append(grads)
         #average graidents blah blah blah
-        return self.average_gradients(tower_grads), cross_entropy_mean, top1acc
+        return self.average_gradients(tower_grads), cross_entropy_mean, top1acc, batch_norm_op
 
     def build_train_op(self):
-        grads, self.loss, self.acc = self.multigpu_grads()
-        self.train_op = self.optimizer.apply_gradients(grads, global_step=self._global_step)
+        grads, self.loss, self.acc, batch_norm_op = self.multigpu_grads()
+        self.train_op = tf.group(self.optimizer.apply_gradients(grads, global_step=self._global_step), batch_norm_op)
 
     def count_trainable_params(self):
         total_parameters = 0
