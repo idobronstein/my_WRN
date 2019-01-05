@@ -26,11 +26,8 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-<<<<<<< HEAD
-UPDATE_PARAM_REGEX = '(group)(1)(/group1.block)({0})(.conv1/kernel:0)'
-=======
+
 UPDATE_PARAM_REGEX = '(group)({0})(/group{0}.block)({1})(.conv1/kernel:0)'
->>>>>>> imagenet_multigpu
 CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
