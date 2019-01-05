@@ -9,6 +9,8 @@ HParams = namedtuple('HParams',
                     'weight_decay, initial_lr, decay_step, lr_decay, '
                     'momentum')
 
+BATCH_COLLECTION = 'batch_collection'
+
 class ResNet():
     '''Bottleneck WRN-50-2 model definition
     '''
@@ -50,7 +52,7 @@ class ResNet():
                                   'gamma': tf.ones(batch_norm_size),
                                   'moving_mean': tf.zeros(batch_norm_size),
                                   'moving_variance': tf.ones(batch_norm_size)}
-        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
+        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, param_initializers=param_initializers, outputs_collections=BATCH_COLLECTION)
         return z
 
     def conv2d(self, x,  name, stride=1, padding=0):
@@ -183,6 +185,8 @@ class MultiResNet():
             
             grads = self.optimizer.compute_gradients(self._total_loss)
         
+            batch_collection = tf.get_collection(BATCH_COLLECTION)
+            import ipdb; ipdb.set_trace()
         return grads, model.loss, model.acc
 
     def multigpu_grads(self):
