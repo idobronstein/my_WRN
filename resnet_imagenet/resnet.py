@@ -47,11 +47,6 @@ class ResNet():
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
-        else:
-            param_initializers = {'beta': tf.zeros(batch_norm_size),
-                                  'gamma': tf.ones(batch_norm_size),
-                                  'moving_mean': tf.zeros(batch_norm_size),
-                                  'moving_variance': tf.ones(batch_norm_size)}
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, param_initializers=param_initializers, outputs_collections=BATCH_COLLECTION)
         return z
 
