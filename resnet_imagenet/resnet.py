@@ -181,7 +181,7 @@ class MultiResNet():
             grads = self.optimizer.compute_gradients(self._total_loss)
         
             batch_collection = tf.get_collection(BATCH_COLLECTION)
-            import ipdb; ipdb.set_trace()
+            import pdb; pdb.set_trace()
         return grads, model.loss, model.acc
 
     def multigpu_grads(self):
