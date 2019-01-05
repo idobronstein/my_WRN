@@ -225,34 +225,39 @@ def compress():
                     cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
                     cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
-                    import ipdb; ipdb.set_trace()
                     flag1 = True
                 elif flag1:
+                    print("compress: ", var.name)
                     new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
                     new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
                     flag1 = False
                     flag2 = True
                 elif flag2:
+                    print("compress: ", var.name)
                     new_beta = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_BETA_NAME.format(group_num=group_num, block_num=block_num)] = (new_beta ,False)
                     flag2 = False
                     flag3 = True
                 elif flag3:
+                    print("compress: ", var.name)
                     new_gamma = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_GAMMA_NAME.format(group_num=group_num, block_num=block_num)] = (new_gamma ,False)
                     flag3 = False
                     flag4 = True
                 elif flag4:
+                    print("compress: ", var.name)
                     new_moving_mean = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_MOVING_MEAN_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_mean ,False)
                     flag4 = False
                     flag5 = True
                 elif flag5:
+                    print("compress: ", var.name)
                     new_moving_variance = sum_batch_norm(var_vec, cluster_indices, cluster_num)
                     new_params[BATCHNORM_MOVING_VARIANCE_NAME.format(group_num=group_num, block_num=block_num)] = (new_moving_variance ,False)
                     flag5 = False
                     flag6 = True
                 elif flag6:
+                    print("compress: ", var.name)
                     new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
                     new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
                     flag6 = False
