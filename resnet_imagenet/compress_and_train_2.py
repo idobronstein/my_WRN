@@ -31,6 +31,7 @@ CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
+SLEEP_BETWEEN_RELOAD = 300
 
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
@@ -147,6 +148,8 @@ def get_next_batch(enum, data_set_type, suffle):
     new_enum = None
     if batch is None:
         del enum
+        print('sleep {0} secondes before reload'.format(SLEEP_BETWEEN_RELOAD))
+        sleep(SLEEP_BETWEEN_RELOAD)
         new_enum = get_enumerate(get_data_loder(data_set_type, suffle))
         batch = next(new_enum, None)
     return batch[0], batch[1], new_enum
@@ -243,7 +246,6 @@ def compress():
             initial_lr = FLAGS.initial_lr_batchnorm
     
         if not just_compress:
-            just_compress = False
             # build new graph and eval
             with tf.Graph().as_default():
                 global_step = tf.Variable(0, trainable=False, name='global_step')
@@ -373,6 +375,8 @@ def compress():
             params = new_params
             init_step = max_steps - 1
             max_steps += FLAGS.max_steps
+        else:
+            just_compress = False
         
 
 def main(argv=None):  # pylint: disable=unused-argument
