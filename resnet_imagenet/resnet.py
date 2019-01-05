@@ -47,7 +47,7 @@ class ResNet():
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
-        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, param_initializers=param_initializers, outputs_collections=BATCH_COLLECTION)
+        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers, outputs_collections=BATCH_COLLECTION)
         return z
 
     def conv2d(self, x,  name, stride=1, padding=0):
@@ -89,7 +89,6 @@ class ResNet():
         o = tf.pad(o, [[0,0], [1,1], [1,1], [0,0]])
         o = tf.nn.max_pool(o, ksize=[1,3,3,1], strides=[1,2,2,1], padding='VALID')
         o_g0 = self.group(o, 'group0', 1, self.blocks[0])
-        import pdb; pdb.set_trace()
         o_g1 = self.group(o_g0, 'group1', 2, self.blocks[1])
         o_g2 = self.group(o_g1, 'group2', 2, self.blocks[2])
         o_g3 = self.group(o_g2, 'group3', 2, self.blocks[3])
