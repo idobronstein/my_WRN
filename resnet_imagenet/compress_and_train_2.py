@@ -377,6 +377,8 @@ def compress():
             max_steps += FLAGS.max_steps
         else:
             just_compress = False
+            params = new_params
+            max_steps += FLAGS.max_steps
         
 
 def main(argv=None):  # pylint: disable=unused-argument
