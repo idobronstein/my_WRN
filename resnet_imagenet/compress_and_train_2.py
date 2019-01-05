@@ -242,7 +242,7 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
-        if just_compress:
+        if not just_compress:
             just_compress = False
             # build new graph and eval
             with tf.Graph().as_default():
