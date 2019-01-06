@@ -166,7 +166,7 @@ def compress():
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
     init_step = 0
-    restore_flag = True
+    restore_flag = 0
     just_compress = True
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
@@ -245,7 +245,7 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
-        if not just_compress:
+        if just_compress > 1:
             # build new graph and eval
             with tf.Graph().as_default():
                 global_step = tf.Variable(0, trainable=False, name='global_step')
@@ -376,7 +376,7 @@ def compress():
             init_step = max_steps - 1
             max_steps += FLAGS.max_steps
         else:
-            just_compress = False
+            just_compress += 1
             params = new_params
             max_steps += FLAGS.max_steps
         
