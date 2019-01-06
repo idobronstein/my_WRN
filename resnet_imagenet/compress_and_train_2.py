@@ -166,7 +166,7 @@ def compress():
     params = {k: v.numpy() for k,v in torch.load(FLAGS.param_dir).items()}
     max_steps = FLAGS.max_steps
     init_step = 0
-    restore_flag = 0
+    restore_flag = True
     just_compress = 0
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
