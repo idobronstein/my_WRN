@@ -167,7 +167,7 @@ def compress():
     max_steps = FLAGS.max_steps
     init_step = 0
     restore_flag = 0
-    just_compress = True
+    just_compress = 0
     for layer_num in range(4):
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         if layer_num != 3:
