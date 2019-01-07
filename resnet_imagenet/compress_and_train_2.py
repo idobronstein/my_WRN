@@ -31,7 +31,7 @@ CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
-SLEEP_BETWEEN_RELOAD = 300
+SLEEP_BETWEEN_RELOAD = 600
 
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
