@@ -147,9 +147,10 @@ def get_next_batch(enum, data_set_type, suffle):
     batch = next(enum, None)
     new_enum = None
     if batch is None:
-        del enum
-        print('sleep {0} secondes before reload'.format(SLEEP_BETWEEN_RELOAD))
-        sleep(SLEEP_BETWEEN_RELOAD)
+        try:
+            del enum
+            print('sleep {0} secondes before reload'.format(SLEEP_BETWEEN_RELOAD))
+            sleep(SLEEP_BETWEEN_RELOAD)
         new_enum = get_enumerate(get_data_loder(data_set_type, suffle))
         batch = next(new_enum, None)
     return batch[0], batch[1], new_enum
@@ -245,7 +246,7 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
-        if just_compress > 0:
+        if just_compress > -1:
             # build new graph and eval
             with tf.Graph().as_default():
                 global_step = tf.Variable(0, trainable=False, name='global_step')
