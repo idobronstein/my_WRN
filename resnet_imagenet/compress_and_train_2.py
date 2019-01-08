@@ -147,10 +147,9 @@ def get_next_batch(enum, data_set_type, suffle):
     batch = next(enum, None)
     new_enum = None
     if batch is None:
-        try:
-            del enum
-            print('sleep {0} secondes before reload'.format(SLEEP_BETWEEN_RELOAD))
-            sleep(SLEEP_BETWEEN_RELOAD)
+        del enum
+        print('sleep {0} secondes before reload'.format(SLEEP_BETWEEN_RELOAD))
+        sleep(SLEEP_BETWEEN_RELOAD)
         new_enum = get_enumerate(get_data_loder(data_set_type, suffle))
         batch = next(new_enum, None)
     return batch[0], batch[1], new_enum
