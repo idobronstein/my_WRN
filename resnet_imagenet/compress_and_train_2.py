@@ -303,12 +303,11 @@ def compress():
                 image_train_file = 0
                 index_train_file = 0
                 for step in range(init_step, max_steps):
-                    if step == 117950:
-                        import pdb; pdb.set_trace()
                     # Test
                     if step % FLAGS.test_interval == 0:
                         test_loss, test_acc = 0.0, 0.0
                         for i in  range(FLAGS.test_iter):
+                            import pdb; pdb.set_trace()
                             test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
                             if new_test_loader is not None:
                                 test_loader = new_test_loader
