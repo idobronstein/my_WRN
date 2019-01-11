@@ -303,6 +303,8 @@ def compress():
                 image_train_file = 0
                 index_train_file = 0
                 for step in range(init_step, max_steps):
+                    if step == 117950:
+                        import pdb; pdb.set_tace()
                     # Test
                     if step % FLAGS.test_interval == 0:
                         test_loss, test_acc = 0.0, 0.0
@@ -356,7 +358,7 @@ def compress():
                         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                         saver.save(sess, checkpoint_path, global_step=step)
                 test_loss, test_acc = 0.0, 0.0
-                import pdb; pdb.set_trace()
+                pdb.set_trace()
                 for i in  range(FLAGS.final_test_iter):
                     print(i)
                     test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
