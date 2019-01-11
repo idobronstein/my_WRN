@@ -304,7 +304,7 @@ def compress():
                 index_train_file = 0
                 for step in range(init_step, max_steps):
                     if step == 117950:
-                        import pdb; pdb.set_tace()
+                        import pdb; pdb.set_trace()
                     # Test
                     if step % FLAGS.test_interval == 0:
                         test_loss, test_acc = 0.0, 0.0
