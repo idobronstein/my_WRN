@@ -356,6 +356,7 @@ def compress():
                         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                         saver.save(sess, checkpoint_path, global_step=step)
                 test_loss, test_acc = 0.0, 0.0
+                import pdb; pdb.set_trace()
                 for i in  range(FLAGS.final_test_iter):
                     print(i)
                     test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
