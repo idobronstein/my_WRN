@@ -185,6 +185,7 @@ def compress():
     restore_flag = True
     just_compress = 0
     layer_num_range = range(3)
+    old_param_num = None
     if FLAGS.dont_compress_first_round:
         layer_num_range = range(-1, 3)
     for layer_num in layer_num_range:
@@ -305,7 +306,8 @@ def compress():
                 new_network = resnet.MultiResNet(new_params, hp, images_splits, labels_splits, FLAGS.num_gpus, global_step, is_training)
                 new_network.build_train_op()
                 new_param_num = new_network.count_trainable_params()
-                print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
+                if old_param_num is not None:
+                    print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
         
                 # Summaries(training)
                 train_summary_op = tf.summary.merge_all()
