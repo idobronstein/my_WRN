@@ -186,7 +186,7 @@ def compress():
     just_compress = 0
     layer_num_range = range(3)
     if FLAGS.dont_compress_first_round:
-        layer_num_range = [-1] + layer_num_range
+        layer_num_range = range(-1, 3)
     for layer_num in layer_num_range:
         if layer_num > 0:
             compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
