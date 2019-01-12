@@ -70,7 +70,7 @@ class ResNet():
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
         mean, var = tf.cond(self._is_training, lambda: (batch_mean, batch_var), lambda: (update_moving_mean, update_moving_variance))
         bn = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5)
-        self.after_batch.append(z)
+        self.after_batch.append(bn)
         return bn
 
     def conv2d(self, x,  name, stride=1, padding=0):
