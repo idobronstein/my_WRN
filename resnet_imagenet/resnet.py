@@ -64,7 +64,7 @@ class ResNet():
             beta = tf.get_variable('beta', batch_mean.get_shape(), tf.float32, initializer=tf.zeros_initializer)
             gamma = tf.get_variable('gamma', batch_var.get_shape(), tf.float32, initializer=tf.ones_initializer)
         update = 1.0 - decay
-        update_moving_mean = moving_mean.assign_sub(update*(mu - batch_mean))
+        update_moving_mean = moving_mean.assign_sub(update*(moving_mean - batch_mean))
         update_moving_variance = moving_variance.assign_sub(update*(moving_variance - batch_var))
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_mean)
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
