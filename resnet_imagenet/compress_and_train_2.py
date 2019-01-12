@@ -70,7 +70,7 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log dev
 # cluster params
 tf.app.flags.DEFINE_float('compression_rate', 0.5, """New Network width multiplier""")
 tf.app.flags.DEFINE_integer('block_to_compress', 3, """The block to compress""")
-tf.app.flags.DEFINE_integer('dont_compress_first_round', True, """If true don't compress in the first round""")
+tf.app.flags.DEFINE_boolean('dont_compress_first_round', False, """If true don't compress in the first round""")
 
 
 FLAGS = tf.app.flags.FLAGS
