@@ -43,15 +43,13 @@ class ResNet():
     
     def batch_norm(self, x, name):
         param_initializers = {}
-        '''
         if '%s.beta'%name in self._params:
             param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name])),
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
-        '''
         self.before_batch.append(x)
-        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers, epsilon=10**-5)
+        z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, param_initializers=param_initializers, epsilon=10**-5)
         self.after_batch.append(z)
         return z
 
