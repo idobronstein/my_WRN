@@ -68,7 +68,7 @@ class ResNet():
         update_moving_variance = moving_variance.assign_sub(update*(moving_variance - batch_var))
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_mean)
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
-        mean, var = tf.cond(self._is_training, lambda: (batch_mean, batch_var), lambda: (update_moving_mean, update_moving_variance))
+        mean, var = tf.cond(self._is_training, lambda: (batch_mean, batch_var), lambda: (moving_mean, moving_variance))
         bn = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5)
         self.after_batch.append(bn)
         return bn
