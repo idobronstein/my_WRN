@@ -372,6 +372,7 @@ def compress():
                     # Train
                     start_time = time.time()
                     image_batch, labels_batch, new_train_loader = get_next_batch(train_loader, 'train', True)
+                    import pdb; pdb.set_trace()
                     if new_train_loader is not None:
                         train_loader = new_train_loader
                     _, lr_value, loss_value, acc_value, train_summary_str = \
