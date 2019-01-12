@@ -298,7 +298,7 @@ def compress():
                 hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
                             num_classes=FLAGS.num_classes,
                             weight_decay=FLAGS.l2_weight,
-                            initial_lr=initial_lr,
+                            initial_lr=FLAGS.initial_lr,
                             decay_step=FLAGS.decay_step,
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
