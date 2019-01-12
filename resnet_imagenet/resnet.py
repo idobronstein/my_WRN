@@ -51,7 +51,7 @@ class ResNet():
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers, epsilon=10**-5)
         self.after_batch.append(z)'''
         self.before_batch.append(x)
-        decay = moving_average_decay
+        decay = 0.99
         batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2])
         if '%s.beta'%name in self._params:
             moving_mean = init_variable(np.float32(self._params['%s.moving_mean'%name]), 'moving_mean')
