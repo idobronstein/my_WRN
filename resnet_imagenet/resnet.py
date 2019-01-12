@@ -36,42 +36,20 @@ class ResNet():
             return v.transpose()
         return v
 
-    def init_variable(self, param, name):
+    def init_variable(self, param, name, fully_define=True):
+        #variable = tf.constant(param)
         variable = tf.get_variable(name, initializer=np.float32(param))
         return variable
     
     def batch_norm(self, x, name):
-        '''param_initializers = {}
+        param_initializers = {}
         if '%s.beta'%name in self._params:
             param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name])),
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
-        self.before_batch.append(x)
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers, epsilon=10**-5)
-        self.after_batch.append(z)'''
-        self.before_batch.append(x)
-        decay = 0.99
-        batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2])
-        if '%s.beta'%name in self._params:
-            moving_mean = init_variable(np.float32(self._params['%s.moving_mean'%name]), 'moving_mean')
-            moving_variance = init_variable(np.float32(self._params['%s.moving_variance'%name]), 'moving_variance')
-            beta = init_variable(np.float32(self._params['%s.beta'%name]), 'beta')
-            gamma = init_variable(np.float32(self._params['%s.gamma'%name]), 'gamma')
-        else:
-            moving_mean = tf.get_variable('moving_mean', batch_mean.get_shape(), tf.float32, initializer=tf.zeros_initializer, trainable=False)
-            moving_variance = tf.get_variable('moving_variance', batch_var.get_shape(), tf.float32, initializer=tf.ones_initializer, trainable=False)
-            beta = tf.get_variable('beta', batch_mean.get_shape(), tf.float32, initializer=tf.zeros_initializer)
-            gamma = tf.get_variable('gamma', batch_var.get_shape(), tf.float32, initializer=tf.ones_initializer)
-        update = 1.0 - decay
-        update_moving_mean = moving_mean.assign_sub(update*(moving_mean - batch_mean))
-        update_moving_variance = moving_variance.assign_sub(update*(moving_variance - batch_var))
-        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_mean)
-        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
-        mean, var = tf.cond(self._is_training, lambda: (batch_mean, batch_var), lambda: (moving_mean, moving_variance))
-        bn = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5)
-        self.after_batch.append(bn)
-        return bn
+        return z
 
     def conv2d(self, x,  name, stride=1, padding=0):
         with tf.variable_scope(name) as scope:
@@ -194,8 +172,6 @@ class MultiResNet():
         with tf.device(device):
             model = ResNet(self._params, self._hp, self._images[device_num], self._labels[device_num], self._global_step, self._is_training)
             model.build_model()
-            self.before_batch = model.before_batch
-            self.after_batch = model.after_batch
 
             # Add l2 loss
             with tf.variable_scope('l2_loss'):
