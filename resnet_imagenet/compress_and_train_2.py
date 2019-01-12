@@ -245,7 +245,7 @@ def compress():
             new_params = params
             initial_lr = FLAGS.initial_lr_batchnorm
     
-        if just_compress > 1:
+        if just_compress > -1:
             # build new graph and eval
             with tf.Graph().as_default():
                 global_step = tf.Variable(0, trainable=False, name='global_step')
