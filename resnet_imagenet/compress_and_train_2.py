@@ -190,6 +190,7 @@ def compress():
         layer_num_range = range(-1, 3)
     for layer_num in layer_num_range:
         if layer_num > -1:
+            print('Start compressing')
             compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
             with tf.Graph().as_default():
                 # Build a Graph that computes the predictions from the inference model.
