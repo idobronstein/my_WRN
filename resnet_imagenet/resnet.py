@@ -21,6 +21,8 @@ class ResNet():
         self._labels = labels
         self._global_step = global_step
         self._is_training = is_training
+        self.before_batch = []
+        self.after_batch = []
 
     def tr(self, v):
         if len(v) == 2:
@@ -41,13 +43,16 @@ class ResNet():
     
     def batch_norm(self, x, name):
         param_initializers = {}
-        batch_norm_size = x.shape[-1]
+        '''
         if '%s.beta'%name in self._params:
             param_initializers = {'beta': tf.convert_to_tensor(np.float32(self._params['%s.beta'%name])),
                                   'gamma': tf.convert_to_tensor(np.float32(self._params['%s.gamma'%name])),
                                   'moving_mean': tf.convert_to_tensor(np.float32(self._params['%s.moving_mean'%name])),
                                   'moving_variance': tf.convert_to_tensor(np.float32(self._params['%s.moving_variance'%name]))}
+        '''
+        self.before_batch.append(x)
         z = tf.contrib.layers.batch_norm(x, scale=True, is_training=self._is_training, updates_collections=None, param_initializers=param_initializers)
+        self.after_batch.append(z)
         return z
 
     def conv2d(self, x,  name, stride=1, padding=0):
