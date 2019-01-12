@@ -176,6 +176,8 @@ class MultiResNet():
         with tf.device(device):
             model = ResNet(self._params, self._hp, self._images[device_num], self._labels[device_num], self._global_step, self._is_training)
             model.build_model()
+            self.before_batch = model.before_batch
+            self.after_batch = model.after_batch
 
             # Add l2 loss
             with tf.variable_scope('l2_loss'):
