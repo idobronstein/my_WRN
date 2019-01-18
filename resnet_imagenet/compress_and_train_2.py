@@ -37,13 +37,10 @@ SLEEP_BETWEEN_RELOAD = 600
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
 tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
 tf.app.flags.DEFINE_float('initial_lr', 0.001, """Initial learning rate""")
-tf.app.flags.DEFINE_float('initial_lr_batchnorm', 0.001, """Initial learning rate fpr last retrain""")
-tf.app.flags.DEFINE_float('lr_step_epoch', 3.0, """Epochs after which learing rate decays""")
 tf.app.flags.DEFINE_float('lr_decay', 0.1, """Learning rate decay factor""")
 tf.app.flags.DEFINE_float('decay_step', 5000, """steps between decay""")
 tf.app.flags.DEFINE_integer('num_train_instance', 1000000, """Number of training images.""")
 tf.app.flags.DEFINE_integer('num_test_instance', 49920, """Number of test images.""")
-
 
 # Dataset Configuration
 tf.app.flags.DEFINE_string('param_dir', './wide-resnet-50-2-export.pth', """Resnet-50-2-bottelneck pre-train""")
@@ -67,6 +64,7 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, """Whether to log dev
 # cluster params
 tf.app.flags.DEFINE_float('compression_rate', 0.5, """New Network width multiplier""")
 tf.app.flags.DEFINE_integer('block_to_compress', 3, """The block to compress""")
+tf.app.flags.DEFINE_boolean('from_end_to_start', False, """If true will compress the first layer first""")
 
 
 FLAGS = tf.app.flags.FLAGS
@@ -168,84 +166,83 @@ def compress():
     init_step = 0
     restore_flag = True
     just_compress = 0
-    for layer_num in range(4):
+    if FLAGS.from_end_to_start:
+        layer_num_range = from_end_to_start
+    else:
+        layer_num_range = range(3)
+    for layer_num in layer_num_range:
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
-        if layer_num != 3:
-            batch_norm = False
-            initial_lr = FLAGS.initial_lr
-            with tf.Graph().as_default():
-        
-                # Build a Graph that computes the predictions from the inference model.
-                images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
-                labels = tf.placeholder(tf.int32, [None])
-                images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
-                labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
-                is_training = tf.placeholder(tf.bool, shape=[])
-        
-                # Build model
-                hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
-                                    num_classes=FLAGS.num_classes,
-                                    weight_decay=None,
-                                    initial_lr=None,
-                                    decay_step=None,
-                                    lr_decay=None,
-                                    momentum=None)
-                
-                network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
-                network.build_model()
-                if layer_num == 0:
-                    old_param_num = network.count_trainable_params()
-        
-                # Build an initialization operation to run below.
-                init = tf.initialize_all_variables()
-        
-                # Start running operations on the Graph.
-                sess = tf.Session(config=tf.ConfigProto(
-                    gpu_options = tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
-                    log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
-                sess.run(init)
-                
-                graph = tf.get_default_graph()
-                flag1 = False
-                flag2 = False
-                new_params = {}
-                for var in tf.trainable_variables():
-                    var_vec = sess.run(var)
-                    match = compress_layer.match(var.name)
-                    if match:
-                        print("compress: ", var.name)
-                        sys.stdout.flush()
-                        group_num = int(match.groups()[1])
-                        block_num = int(match.groups()[3])
-                        cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
-                        cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
-                        new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
-                        flag1 = True
-                    elif flag1:
-                        new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
-                        new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
-                        flag1 = False
-                        flag2 = True
-                    elif flag2:
-                        new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
-                        new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
-                        flag2 = False
+        batch_norm = False
+        initial_lr = FLAGS.initial_lr
+        with tf.Graph().as_default():
     
-                for k, v in params.items():
-                        if k not in new_params:
-                            if len(v) == 1:
-                                new_params[k] = (v, True)
-                            else:
-                                new_params[k] = v
-                #close old graph
-                sess.close()
-            tf.reset_default_graph()
-        else:
-            batch_norm = True
-            new_params = params
-            initial_lr = FLAGS.initial_lr_batchnorm
+            # Build a Graph that computes the predictions from the inference model.
+            images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+            labels = tf.placeholder(tf.int32, [None])
+            images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
+            labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
+            is_training = tf.placeholder(tf.bool, shape=[])
     
-        if just_compress > 1:
+            # Build model
+            hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
+                                num_classes=FLAGS.num_classes,
+                                weight_decay=None,
+                                initial_lr=None,
+                                decay_step=None,
+                                lr_decay=None,
+                                momentum=None)
+            
+            network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
+            network.build_model()
+            if layer_num == 0:
+                old_param_num = network.count_trainable_params()
+    
+            # Build an initialization operation to run below.
+            init = tf.initialize_all_variables()
+    
+            # Start running operations on the Graph.
+            sess = tf.Session(config=tf.ConfigProto(
+                gpu_options = tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
+                log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
+            sess.run(init)
+            
+            graph = tf.get_default_graph()
+            flag1 = False
+            flag2 = False
+            new_params = {}
+            for var in tf.trainable_variables():
+                var_vec = sess.run(var)
+                match = compress_layer.match(var.name)
+                if match:
+                    print("compress: ", var.name)
+                    sys.stdout.flush()
+                    group_num = int(match.groups()[1])
+                    block_num = int(match.groups()[3])
+                    cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
+                    cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
+                    new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
+                    flag1 = True
+                elif flag1:
+                    new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
+                    new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
+                    flag1 = False
+                    flag2 = True
+                elif flag2:
+                    new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
+                    new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
+                    flag2 = False
+
+            for k, v in params.items():
+                    if k not in new_params:
+                        if len(v) == 1:
+                            new_params[k] = (v, True)
+                        else:
+                            new_params[k] = v
+            #close old graph
+            sess.close()
+        tf.reset_default_graph()
+    
+        if just_compress > -1:
             # build new graph and eval
             with tf.Graph().as_default():
                 global_step = tf.Variable(0, trainable=False, name='global_step')
@@ -259,7 +256,7 @@ def compress():
                 hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
                             num_classes=FLAGS.num_classes,
                             weight_decay=FLAGS.l2_weight,
-                            initial_lr=initial_lr,
+                            initial_lr=FLAGS.initial_lr,
                             decay_step=FLAGS.decay_step,
                             lr_decay=FLAGS.lr_decay,
                             momentum=FLAGS.momentum)
