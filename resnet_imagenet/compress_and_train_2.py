@@ -167,7 +167,7 @@ def compress():
     restore_flag = True
     just_compress = 0
     if FLAGS.from_end_to_start:
-        layer_num_range = from_end_to_start
+        layer_num_range = range(2,-1,-1)
     else:
         layer_num_range = range(3)
     for layer_num in layer_num_range:
