@@ -166,6 +166,7 @@ def compress():
     init_step = 0
     restore_flag = True
     just_compress = 0
+    is_first = True
     if FLAGS.from_end_to_start:
         layer_num_range = range(2,-1,-1)
     else:
@@ -194,8 +195,9 @@ def compress():
             
             network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
             network.build_model()
-            if layer_num == 0:
+            if is_first:
                 old_param_num = network.count_trainable_params()
+                is_first = False
     
             # Build an initialization operation to run below.
             init = tf.initialize_all_variables()
