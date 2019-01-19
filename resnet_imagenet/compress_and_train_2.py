@@ -176,7 +176,7 @@ def compress():
         layer_num_range = range(3)
     '''
     for block_num in range(4):
-        for layer_num in BLOCK_TO_LAYER_MUN[block_num]:
+        for layer_num in range(BLOCK_TO_LAYER_MUN[block_num]):
             compress_layer = re.compile(UPDATE_PARAM_REGEX.format(block_num, layer_num))
             batch_norm = False
             initial_lr = FLAGS.initial_lr
