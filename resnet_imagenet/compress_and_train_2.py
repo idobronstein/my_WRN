@@ -31,6 +31,8 @@ CONV1_KERNEL1_NAME = 'group{group_num}.block{block_num}.conv1.weight'
 CONV1_KERNEL2_NAME = 'group{group_num}.block{block_num}.conv2.weight'
 CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
+BLOCK_TO_LAYER_MUN = [3, 4, 6, 3]
+
 SLEEP_BETWEEN_RELOAD = 600
 
 # Optimization Configuration
@@ -167,217 +169,220 @@ def compress():
     restore_flag = True
     just_compress = 0
     is_first = True
+    '''
     if FLAGS.from_end_to_start:
         layer_num_range = range(2,-1,-1)
     else:
         layer_num_range = range(3)
-    for layer_num in layer_num_range:
-        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
-        batch_norm = False
-        initial_lr = FLAGS.initial_lr
-        with tf.Graph().as_default():
-    
-            # Build a Graph that computes the predictions from the inference model.
-            images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
-            labels = tf.placeholder(tf.int32, [None])
-            images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
-            labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
-            is_training = tf.placeholder(tf.bool, shape=[])
-    
-            # Build model
-            hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
-                                num_classes=FLAGS.num_classes,
-                                weight_decay=None,
-                                initial_lr=None,
-                                decay_step=None,
-                                lr_decay=None,
-                                momentum=None)
-            
-            network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
-            network.build_model()
-            if is_first:
-                old_param_num = network.count_trainable_params()
-                is_first = False
-    
-            # Build an initialization operation to run below.
-            init = tf.initialize_all_variables()
-    
-            # Start running operations on the Graph.
-            sess = tf.Session(config=tf.ConfigProto(
-                gpu_options = tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
-                log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
-            sess.run(init)
-            
-            graph = tf.get_default_graph()
-            flag1 = False
-            flag2 = False
-            new_params = {}
-            for var in tf.trainable_variables():
-                var_vec = sess.run(var)
-                match = compress_layer.match(var.name)
-                if match:
-                    print("compress: ", var.name)
-                    sys.stdout.flush()
-                    group_num = int(match.groups()[1])
-                    block_num = int(match.groups()[3])
-                    cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
-                    cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
-                    new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
-                    flag1 = True
-                elif flag1:
-                    new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
-                    new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
-                    flag1 = False
-                    flag2 = True
-                elif flag2:
-                    new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
-                    new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
-                    flag2 = False
-
-            for k, v in params.items():
-                    if k not in new_params:
-                        if len(v) == 1:
-                            new_params[k] = (v, True)
-                        else:
-                            new_params[k] = v
-            #close old graph
-            sess.close()
-        tf.reset_default_graph()
-    
-        if just_compress > -1:
-            # build new graph and eval
+    '''
+    for block_num in range(4):
+        for layer_num in BLOCK_TO_LAYER_MUN[block_num]:
+            compress_layer = re.compile(UPDATE_PARAM_REGEX.format(block_num, layer_num))
+            batch_norm = False
+            initial_lr = FLAGS.initial_lr
             with tf.Graph().as_default():
-                global_step = tf.Variable(0, trainable=False, name='global_step')
         
+                # Build a Graph that computes the predictions from the inference model.
                 images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
                 labels = tf.placeholder(tf.int32, [None])
                 images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
                 labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
                 is_training = tf.placeholder(tf.bool, shape=[])
-                
+        
+                # Build model
                 hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
-                            num_classes=FLAGS.num_classes,
-                            weight_decay=FLAGS.l2_weight,
-                            initial_lr=FLAGS.initial_lr,
-                            decay_step=FLAGS.decay_step,
-                            lr_decay=FLAGS.lr_decay,
-                            momentum=FLAGS.momentum)
-                new_network = resnet.MultiResNet(new_params, hp, images_splits, labels_splits, FLAGS.num_gpus, global_step, is_training, batch_norm)
-                new_network.build_train_op()
-                new_param_num = new_network.count_trainable_params()
-                print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
+                                    num_classes=FLAGS.num_classes,
+                                    weight_decay=None,
+                                    initial_lr=None,
+                                    decay_step=None,
+                                    lr_decay=None,
+                                    momentum=None)
+                
+                network = resnet.ResNet(params, hp, images_splits[0], labels_splits[0], None, is_training, False)
+                network.build_model()
+                if is_first:
+                    old_param_num = network.count_trainable_params()
+                    is_first = False
         
-                # Summaries(training)
-                train_summary_op = tf.summary.merge_all()
-        
+                # Build an initialization operation to run below.
                 init = tf.initialize_all_variables()
+        
                 # Start running operations on the Graph.
                 sess = tf.Session(config=tf.ConfigProto(
                     gpu_options = tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
                     log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
                 sess.run(init)
-        
-                # Create a saver.
-                saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
-                if restore_flag:
-                    ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-                    if ckpt and ckpt.model_checkpoint_path:
-                        print('\tRestore from %s' % ckpt.model_checkpoint_path)
-                        # Restores from checkpoint
-                        saver.restore(sess, ckpt.model_checkpoint_path)
-                        init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
-                    else:
-                       print('No checkpoint file found. Start from the scratch.')
-                    restore_flag = False
-                sys.stdout.flush()
-        
-                # Start queue runners & summary_writer
-                tf.train.start_queue_runners(sess=sess)
-                if not os.path.exists(FLAGS.train_dir):
-                    os.mkdir(FLAGS.train_dir)
-                summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-        
-                # Training!
-                test_best_acc = 0.0
-                image_train_file = 0
-                index_train_file = 0
-                for step in range(init_step, max_steps):
-                    # Test
-                    if step % FLAGS.test_interval == 0:
-                        test_loss, test_acc = 0.0, 0.0
-                        for i in  range(FLAGS.test_iter):
-                            test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
-                            if new_test_loader is not None:
-                                test_loader = new_test_loader
-                            loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                        feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
-                            test_loss += loss_value
-                            test_acc += acc_value
-                        test_loss /= FLAGS.test_iter
-                        test_acc /= FLAGS.test_iter
-                        test_best_acc = max(test_best_acc, test_acc)
-                        format_str = ('%s: (Test)     step %d, loss=%.4f, acc=%.4f')
-                        print(format_str % (datetime.now(), step, test_loss, test_acc))
+                
+                graph = tf.get_default_graph()
+                flag1 = False
+                flag2 = False
+                new_params = {}
+                for var in tf.trainable_variables():
+                    var_vec = sess.run(var)
+                    match = compress_layer.match(var.name)
+                    if match:
+                        print("compress: ", var.name)
                         sys.stdout.flush()
-        
-                        test_summary = tf.Summary()
-                        test_summary.value.add(tag='test/loss', simple_value=test_loss)
-                        test_summary.value.add(tag='test/acc', simple_value=test_acc)
-                        test_summary.value.add(tag='test/best_acc', simple_value=test_best_acc)
-                        summary_writer.add_summary(test_summary, step)
-                        summary_writer.flush()
-        
-                    # Train
-                    start_time = time.time()
-                    image_batch, labels_batch, new_train_loader = get_next_batch(train_loader, 'train', True)
-                    if new_train_loader is not None:
-                        train_loader = new_train_loader
-                    _, lr_value, loss_value, acc_value, train_summary_str = \
-                            sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
-                                feed_dict={images:image_batch, labels:labels_batch, is_training:True})
-                    duration = time.time() - start_time
-                    assert not np.isnan(loss_value)
-        
-                    # Display & Summary(training)
-                    if step % FLAGS.display == 0:
-                        num_examples_per_step = FLAGS.batch_size
-                        examples_per_sec = num_examples_per_step / duration
-                        sec_per_batch = float(duration)
-                        format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
-                                      'sec/batch)')
-                        print(format_str % (datetime.now(), step, loss_value, acc_value, lr_value,
-                                             examples_per_sec, sec_per_batch))
-                        sys.stdout.flush()
-                        summary_writer.add_summary(train_summary_str, step)
-        
-                    # Save the model checkpoint periodically.
-                    if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
-                        checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                        saver.save(sess, checkpoint_path, global_step=step)
-                test_loss, test_acc = 0.0, 0.0
-                for i in  range(FLAGS.final_test_iter):
-                    test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
-                    if new_test_loader is not None:
-                        test_loader = new_test_loader
-                    loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
-                                feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
-                    test_loss += loss_value
-                    test_acc += acc_value
-                test_loss /= FLAGS.final_test_iter
-                test_acc /= FLAGS.final_test_iter
-                test_best_acc = max(test_best_acc, test_acc)
-                format_str = ('%s: (Final Test)     step %d, loss=%.4f, acc=%.4f')
-                print(format_str % (datetime.now(), step, test_loss, test_acc))
-                sys.stdout.flush()
+                        group_num = int(match.groups()[1])
+                        block_num = int(match.groups()[3])
+                        cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
+                        cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
+                        new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
+                        flag1 = True
+                    elif flag1:
+                        new_bias = sum_bias(var_vec, cluster_indices, cluster_num)
+                        new_params[CONV1_BIAS_NAME.format(group_num=group_num, block_num=block_num)] = (new_bias ,False)
+                        flag1 = False
+                        flag2 = True
+                    elif flag2:
+                        new_kernel = sum_kernel(var_vec, cluster_indices, cluster_num)
+                        new_params[CONV1_KERNEL2_NAME.format(group_num=group_num, block_num=block_num)] = (new_kernel ,False)
+                        flag2 = False
+    
+                for k, v in params.items():
+                        if k not in new_params:
+                            if len(v) == 1:
+                                new_params[k] = (v, True)
+                            else:
+                                new_params[k] = v
+                #close old graph
                 sess.close()
-            tf.reset_default_graph()        
-            params = new_params
-            init_step = max_steps - 1
-            max_steps += FLAGS.max_steps
-        else:
-            just_compress += 1
-            params = new_params
-            max_steps += FLAGS.max_steps
+            tf.reset_default_graph()
+        
+            if just_compress > -1:
+                # build new graph and eval
+                with tf.Graph().as_default():
+                    global_step = tf.Variable(0, trainable=False, name='global_step')
+            
+                    images = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+                    labels = tf.placeholder(tf.int32, [None])
+                    images_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=images)
+                    labels_splits = tf.split(axis=0, num_or_size_splits=FLAGS.num_gpus, value=labels)
+                    is_training = tf.placeholder(tf.bool, shape=[])
+                    
+                    hp = resnet.HParams(batch_size=int(FLAGS.batch_size / FLAGS.num_gpus),
+                                num_classes=FLAGS.num_classes,
+                                weight_decay=FLAGS.l2_weight,
+                                initial_lr=FLAGS.initial_lr,
+                                decay_step=FLAGS.decay_step,
+                                lr_decay=FLAGS.lr_decay,
+                                momentum=FLAGS.momentum)
+                    new_network = resnet.MultiResNet(new_params, hp, images_splits, labels_splits, FLAGS.num_gpus, global_step, is_training, batch_norm)
+                    new_network.build_train_op()
+                    new_param_num = new_network.count_trainable_params()
+                    print("compression rate: ", 100 - new_param_num / old_param_num * 100, " %")
+            
+                    # Summaries(training)
+                    train_summary_op = tf.summary.merge_all()
+            
+                    init = tf.initialize_all_variables()
+                    # Start running operations on the Graph.
+                    sess = tf.Session(config=tf.ConfigProto(
+                        gpu_options = tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=FLAGS.gpu_fraction),
+                        log_device_placement=FLAGS.log_device_placement, allow_soft_placement=True))
+                    sess.run(init)
+            
+                    # Create a saver.
+                    saver = tf.train.Saver(tf.all_variables(), max_to_keep=10000)
+                    if restore_flag:
+                        ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
+                        if ckpt and ckpt.model_checkpoint_path:
+                            print('\tRestore from %s' % ckpt.model_checkpoint_path)
+                            # Restores from checkpoint
+                            saver.restore(sess, ckpt.model_checkpoint_path)
+                            init_step = int(ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1])
+                        else:
+                           print('No checkpoint file found. Start from the scratch.')
+                        restore_flag = False
+                    sys.stdout.flush()
+            
+                    # Start queue runners & summary_writer
+                    tf.train.start_queue_runners(sess=sess)
+                    if not os.path.exists(FLAGS.train_dir):
+                        os.mkdir(FLAGS.train_dir)
+                    summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+            
+                    # Training!
+                    test_best_acc = 0.0
+                    image_train_file = 0
+                    index_train_file = 0
+                    for step in range(init_step, max_steps):
+                        # Test
+                        if step % FLAGS.test_interval == 0:
+                            test_loss, test_acc = 0.0, 0.0
+                            for i in  range(FLAGS.test_iter):
+                                test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
+                                if new_test_loader is not None:
+                                    test_loader = new_test_loader
+                                loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
+                                            feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
+                                test_loss += loss_value
+                                test_acc += acc_value
+                            test_loss /= FLAGS.test_iter
+                            test_acc /= FLAGS.test_iter
+                            test_best_acc = max(test_best_acc, test_acc)
+                            format_str = ('%s: (Test)     step %d, loss=%.4f, acc=%.4f')
+                            print(format_str % (datetime.now(), step, test_loss, test_acc))
+                            sys.stdout.flush()
+            
+                            test_summary = tf.Summary()
+                            test_summary.value.add(tag='test/loss', simple_value=test_loss)
+                            test_summary.value.add(tag='test/acc', simple_value=test_acc)
+                            test_summary.value.add(tag='test/best_acc', simple_value=test_best_acc)
+                            summary_writer.add_summary(test_summary, step)
+                            summary_writer.flush()
+            
+                        # Train
+                        start_time = time.time()
+                        image_batch, labels_batch, new_train_loader = get_next_batch(train_loader, 'train', True)
+                        if new_train_loader is not None:
+                            train_loader = new_train_loader
+                        _, lr_value, loss_value, acc_value, train_summary_str = \
+                                sess.run([new_network.train_op, new_network.lr, new_network.loss, new_network.acc, train_summary_op],
+                                    feed_dict={images:image_batch, labels:labels_batch, is_training:True})
+                        duration = time.time() - start_time
+                        assert not np.isnan(loss_value)
+            
+                        # Display & Summary(training)
+                        if step % FLAGS.display == 0:
+                            num_examples_per_step = FLAGS.batch_size
+                            examples_per_sec = num_examples_per_step / duration
+                            sec_per_batch = float(duration)
+                            format_str = ('%s: (Training) step %d, loss=%.4f, acc=%.4f, lr=%f (%.1f examples/sec; %.3f '
+                                          'sec/batch)')
+                            print(format_str % (datetime.now(), step, loss_value, acc_value, lr_value,
+                                                 examples_per_sec, sec_per_batch))
+                            sys.stdout.flush()
+                            summary_writer.add_summary(train_summary_str, step)
+            
+                        # Save the model checkpoint periodically.
+                        if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == FLAGS.max_steps:
+                            checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                            saver.save(sess, checkpoint_path, global_step=step)
+                    test_loss, test_acc = 0.0, 0.0
+                    for i in  range(FLAGS.final_test_iter):
+                        test_images_val, test_labels_val, new_test_loader = get_next_batch(test_loader, 'val', True)
+                        if new_test_loader is not None:
+                            test_loader = new_test_loader
+                        loss_value, acc_value = sess.run([new_network.loss, new_network.acc],
+                                    feed_dict={images:test_images_val, labels:test_labels_val, is_training:False})
+                        test_loss += loss_value
+                        test_acc += acc_value
+                    test_loss /= FLAGS.final_test_iter
+                    test_acc /= FLAGS.final_test_iter
+                    test_best_acc = max(test_best_acc, test_acc)
+                    format_str = ('%s: (Final Test)     step %d, loss=%.4f, acc=%.4f')
+                    print(format_str % (datetime.now(), step, test_loss, test_acc))
+                    sys.stdout.flush()
+                    sess.close()
+                tf.reset_default_graph()        
+                params = new_params
+                init_step = max_steps - 1
+                max_steps += FLAGS.max_steps
+            else:
+                just_compress += 1
+                params = new_params
+                max_steps += FLAGS.max_steps
         
 
 def main(argv=None):  # pylint: disable=unused-argument
