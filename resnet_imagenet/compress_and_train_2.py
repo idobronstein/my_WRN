@@ -176,10 +176,10 @@ def compress():
     else:
         layer_num_range = range(3)
     '''
-    for block_num in range(4):
-        for layer_num in range(BLOCK_TO_LAYER_MUN[block_num]):
-            compress_layer = re.compile(UPDATE_PARAM_REGEX.format(block_num, layer_num))
-            max_steps += BLOCK_TO_MAX_STEPS[block_num]
+    for group_num in range(4):
+        for layer_num in range(BLOCK_TO_LAYER_MUN[group_num]):
+            compress_layer = re.compile(UPDATE_PARAM_REGEX.format(group_num, layer_num))
+            max_steps += BLOCK_TO_MAX_STEPS[group_num]
             batch_norm = False
             initial_lr = FLAGS.initial_lr
             with tf.Graph().as_default():
@@ -266,7 +266,7 @@ def compress():
                                 num_classes=FLAGS.num_classes,
                                 weight_decay=FLAGS.l2_weight,
                                 initial_lr=FLAGS.initial_lr,
-                                decay_step=int(BLOCK_TO_MAX_STEPS[block_num] / 2),
+                                decay_step=int(BLOCK_TO_MAX_STEPS[group_num] / 2),
                                 lr_decay=FLAGS.lr_decay,
                                 momentum=FLAGS.momentum)
                     new_network = resnet.MultiResNet(new_params, hp, images_splits, labels_splits, FLAGS.num_gpus, global_step, is_training, batch_norm)
@@ -358,7 +358,7 @@ def compress():
                             summary_writer.add_summary(train_summary_str, step)
             
                         # Save the model checkpoint periodically.
-                        if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == BLOCK_TO_MAX_STEPS[block_num]:
+                        if (step > init_step and step % FLAGS.checkpoint_interval == 0) or (step + 1) == BLOCK_TO_MAX_STEPS[group_num]:
                             checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                             saver.save(sess, checkpoint_path, global_step=step)
                     test_loss, test_acc = 0.0, 0.0
