@@ -251,7 +251,7 @@ def compress():
                 sess.close()
             tf.reset_default_graph()
         
-            if just_compress > 0:
+            if just_compress > -1:
                 # build new graph and eval
                 with tf.Graph().as_default():
                     global_step = tf.Variable(0, trainable=False, name='global_step')
