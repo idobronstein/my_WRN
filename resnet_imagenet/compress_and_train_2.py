@@ -168,9 +168,9 @@ def compress():
     just_compress = 0
     is_first = True
     if FLAGS.from_end_to_start:
-        layer_num_range = range(2,-1,-1)
+        layer_num_range = range(0,-1,-1)
     else:
-        layer_num_range = range(3)
+        layer_num_range = range(1)
     for layer_num in layer_num_range:
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         batch_norm = False
