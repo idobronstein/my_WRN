@@ -33,6 +33,8 @@ CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
 SLEEP_BETWEEN_RELOAD = 600
 
+COMPRESS_LEVEL = [0.4, 0.8]
+
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
 tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
@@ -168,11 +170,11 @@ def compress():
     just_compress = 0
     is_first = True
     if FLAGS.from_end_to_start:
-        layer_num_range = range(0,-1,-1)
+        layer_num_range = range(1,-1,-1)
     else:
-        layer_num_range = range(1)
+        layer_num_range = range(2)
     for layer_num in layer_num_range:
-        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
+        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(COMPRESS_LEVEL[layer_num], layer_num))
         batch_norm = False
         initial_lr = FLAGS.initial_lr
         with tf.Graph().as_default():
