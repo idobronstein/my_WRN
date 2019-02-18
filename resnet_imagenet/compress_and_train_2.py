@@ -174,7 +174,7 @@ def compress():
     else:
         layer_num_range = range(2)
     for layer_num in layer_num_range:
-        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(COMPRESS_LEVEL[layer_num], layer_num))
+        compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         batch_norm = False
         initial_lr = FLAGS.initial_lr
         with tf.Graph().as_default():
@@ -222,7 +222,7 @@ def compress():
                     sys.stdout.flush()
                     group_num = int(match.groups()[1])
                     block_num = int(match.groups()[3])
-                    cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
+                    cluster_num = int(int(var.shape[-1]) * COMPRESS_LEVEL[layer_num])
                     cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
                     flag1 = True
