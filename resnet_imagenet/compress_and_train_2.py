@@ -33,7 +33,7 @@ CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
 SLEEP_BETWEEN_RELOAD = 600
 
-COMPRESS_LEVEL = [0.1, 0.7]
+COMPRESS_LEVEL = [0.2, 0.6]
 
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
