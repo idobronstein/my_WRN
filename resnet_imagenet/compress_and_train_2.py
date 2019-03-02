@@ -33,6 +33,8 @@ CONV1_BIAS_NAME = 'group{group_num}.block{block_num}.conv1.bias'
 
 SLEEP_BETWEEN_RELOAD = 600
 
+COMPRESS_LEVEL = [0.7, 0.1]
+
 # Optimization Configuration
 tf.app.flags.DEFINE_float('l2_weight', 0.0005, """L2 loss weight applied all the weights""")
 tf.app.flags.DEFINE_float('momentum', 0.9, """The momentum of MomentumOptimizer""")
@@ -170,7 +172,7 @@ def compress():
     if FLAGS.from_end_to_start:
         layer_num_range = range(1,-1,-1)
     else:
-        layer_num_range = range(1,2)
+        layer_num_range = range(2)
     for layer_num in layer_num_range:
         compress_layer = re.compile(UPDATE_PARAM_REGEX.format(FLAGS.block_to_compress, layer_num))
         batch_norm = False
@@ -220,7 +222,7 @@ def compress():
                     sys.stdout.flush()
                     group_num = int(match.groups()[1])
                     block_num = int(match.groups()[3])
-                    cluster_num = int(int(var.shape[-1]) * FLAGS.compression_rate)
+                    cluster_num = int(int(var.shape[-1]) * COMPRESS_LEVEL[layer_num])
                     cluster_centers, cluster_indices = cluster_kernel(var_vec, cluster_num)
                     new_params[CONV1_KERNEL1_NAME.format(group_num=group_num, block_num=block_num)] = (cluster_centers, False)
                     flag1 = True
